@@ -124,7 +124,7 @@
 
                     <select name="id_jenisbarang" class="w-full mb-3 p-2 border rounded" required>
                         <option value="">-- Pilih Jenis Barang --</option>
-                        @foreach (\App\Models\Jenisbarang::all() as $jenis)
+                        @foreach (\App\Models\JenisBarang::all() as $jenis)
                             <option value="{{ $jenis->id }}">{{ $jenis->jenis_barang }}</option>
                         @endforeach
                     </select>

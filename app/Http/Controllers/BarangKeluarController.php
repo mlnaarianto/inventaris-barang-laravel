@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BarangKeluar;
-use App\Models\Databarang;
+use App\Models\DataBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,7 +12,7 @@ class BarangKeluarController extends Controller
     public function index()
     {
         $barangkeluars = BarangKeluar::with('dataBarang')->get();
-        $databarangs = Databarang::all(); // diasumsikan juga pakai tenant filtering
+        $databarangs = DataBarang::all(); // diasumsikan juga pakai tenant filtering
 
         // Generate ID otomatis untuk no_barangkeluar
         $newId = $this->generateNoBarangKeluar();

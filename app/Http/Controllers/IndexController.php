@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
-use App\Models\Databarang;
+use App\Models\DataBarang;
 use App\Models\BarangMasuk;
 use App\Models\BarangKeluar;
 use App\Models\Satuan;
@@ -31,13 +31,13 @@ public function index()
     $tenants = $directTenants->merge($relatedTenants)->unique('id');
 
     // Hitung langsung tanpa load data
-    $jumlahBarang = Databarang::count();
+    $jumlahBarang = DataBarang::count();
     $jumlahBarangMasuk = BarangMasuk::sum('jumlah_masuk'); // asumsi ada kolom 'jumlah'
     $jumlahBarangKeluar = BarangKeluar::sum('jumlah_keluar'); // asumsi ada kolom 'jumlah'
     $jumlahSatuan = Satuan::count();
 
     // Ambil data barang untuk ditampilkan di tabel
-    $databarangs = Databarang::with(['satuan', 'jenisbarang'])->get();
+    $databarangs = DataBarang::with(['satuan', 'jenisbarang'])->get();
 
     return view('index', compact(
         'tenants',
