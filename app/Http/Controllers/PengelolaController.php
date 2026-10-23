@@ -7,68 +7,62 @@ use App\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
 use App\Models\BarangMasuk;
 use App\Models\BarangKeluar;
-use App\Models\Databarang; // Pastikan ini ditambahkan di atas jika belum
+use App\Models\Databarang;
 use Barryvdh\DomPDF\Facade\Pdf;
-
-
-
 
 class PengelolaController extends Controller
 {
+    /**
+     * Daftar id tenant milik user login:
+     * - tenant yang didaftarkan dengan email user (pengelola), dan
+     * - tenant yang tertaut lewat users.id_tenant
+     */
+    protected function tenantIds()
+    {
+        $user = Auth::user();
+
+        return Tenant::where('email', $user->email)->pluck('id')
+            ->when($user->id_tenant, fn($c) => $c->push($user->id_tenant))
+            ->unique()
+            ->values();
+    }
 
     public function indexLaporanStok(Request $request)
-{
-    $user = Auth::user();
+    {
+        $tenantIds = $this->tenantIds();
 
-    // Ambil semua tenant yang terkait dengan user
-    $tenantIds = Tenant::where('email', $user->email)->pluck('id')
-        ->merge(
-            Tenant::whereHas('tenantRoleUsers.role', fn($q) => $q->where('id_user', $user->id))
-                ->pluck('id')
-        )->unique();
+        // Tenant untuk dropdown filter
+        $tenants = Tenant::whereIn('id', $tenantIds)->get();
 
-    // Ambil semua tenant untuk dropdown filter (jika dibutuhkan)
-    $tenants = Tenant::whereIn('id', $tenantIds)->get();
+        $query = Databarang::with('satuan')
+            ->whereIn('id_tenant', $tenantIds);
 
-    // Mulai query untuk stok barang dari tabel databarangs
-    $query = Databarang::with('satuan')
-        ->whereIn('id_tenant', $tenantIds);
+        if ($request->filled('id_tenant')) {
+            $query->where('id_tenant', $request->id_tenant);
+        }
 
-    // Filter berdasarkan tenant jika dipilih
-    if ($request->filled('id_tenant')) {
-        $query->where('id_tenant', $request->id_tenant);
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('id_barang', 'like', "%{$search}%")
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhereHas('satuan', function ($q2) use ($search) {
+                        $q2->where('nama', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $stokBarangs = $query->get();
+
+        return view('laporanstok', compact('stokBarangs', 'tenants'));
     }
-
-    // Filter pencarian
-    if ($request->filled('search')) {
-        $search = $request->search;
-
-        $query->where(function ($q) use ($search) {
-            $q->where('id_barang', 'like', "%{$search}%")
-              ->orWhere('nama_barang', 'like', "%{$search}%")
-              ->orWhereHas('satuan', function ($q2) use ($search) {
-                  $q2->where('nama', 'like', "%{$search}%");
-              });
-        });
-    }
-
-    // Eksekusi query
-    $stokBarangs = $query->get();
-
-    return view('laporanstok', compact('stokBarangs', 'tenants'));
-}
 
     public function cetakLaporanBarangKeluar(Request $request)
     {
-            \Carbon\Carbon::setLocale('id');
+        \Carbon\Carbon::setLocale('id');
 
-        $user = Auth::user();
-
-        $tenantIds = Tenant::where('email', $user->email)->pluck('id')
-            ->merge(
-                Tenant::whereHas('tenantRoleUsers.role', fn($q) => $q->where('id_user', $user->id))
-                    ->pluck('id')
-            )->unique();
+        $tenantIds = $this->tenantIds();
 
         if (!$request->filled(['tanggal_awal', 'tanggal_akhir'])) {
             return back()->with('crud_error', 'Harap isi tanggal awal & akhir.');
@@ -89,14 +83,13 @@ class PengelolaController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('no_barangkeluar', 'like', "%{$search}%")
-                    ->orWhere('tanggal',        'like', "%{$search}%")
-                    ->orWhere('jumlah_keluar',  'like', "%{$search}%")
+                    ->orWhere('tanggal', 'like', "%{$search}%")
+                    ->orWhere('jumlah_keluar', 'like', "%{$search}%")
                     ->orWhereHas('dataBarang', function ($q2) use ($search) {
                         $q2->where('nama_barang', 'like', "%{$search}%")
                             ->orWhereHas(
                                 'satuan',
-                                fn($q3) =>
-                                $q3->where('nama', 'like', "%{$search}%")
+                                fn($q3) => $q3->where('nama', 'like', "%{$search}%")
                             );
                     });
             });
@@ -110,21 +103,11 @@ class PengelolaController extends Controller
         return $pdf->download('laporan_barang_keluar.pdf');
     }
 
-
     public function cetakLaporanBarangMasuk(Request $request)
     {
-            \Carbon\Carbon::setLocale('id');
+        \Carbon\Carbon::setLocale('id');
 
-        $user = Auth::user();
-
-        $directTenants = Tenant::where('email', $user->email)->pluck('id');
-        $relatedTenants = Tenant::whereHas('tenantRoleUsers', function ($query) use ($user) {
-            $query->whereHas('role', function ($subQuery) use ($user) {
-                $subQuery->where('id_user', $user->id);
-            });
-        })->pluck('id');
-
-        $tenantIds = $directTenants->merge($relatedTenants)->unique();
+        $tenantIds = $this->tenantIds();
 
         if (!$request->filled('tanggal_awal') || !$request->filled('tanggal_akhir')) {
             return redirect()->back()->with('crud_error', 'Harap isi tanggal awal dan akhir.');
@@ -163,17 +146,9 @@ class PengelolaController extends Controller
         return $pdf->download('laporan_barang_masuk.pdf');
     }
 
-
     public function indexLaporanBarangMasuk(Request $request)
     {
-        $user = Auth::user();
-
-        // Ambil semua tenant yg terkait user
-        $tenantIds = Tenant::where('email', $user->email)->pluck('id')
-            ->merge(
-                Tenant::whereHas('tenantRoleUsers.role', fn($q) => $q->where('id_user', $user->id))
-                    ->pluck('id')
-            )->unique();
+        $tenantIds = $this->tenantIds();
 
         /* ---------- 1. Mulai query builder ---------- */
         $query = BarangMasuk::with(['dataBarang', 'dataBarang.satuan'])
@@ -207,7 +182,6 @@ class PengelolaController extends Controller
             });
         }
 
-
         /* ---------- 4. Eksekusi query --------------- */
         // Jika tidak ada filter sama sekali, kembalikan koleksi kosong
         $barangMasuks = ($request->filled('tanggal_awal') || $request->filled('search'))
@@ -219,19 +193,9 @@ class PengelolaController extends Controller
         return view('laporanmasuk', compact('barangMasuks', 'tenants'));
     }
 
-
-
-
     public function indexLaporanBarangKeluar(Request $request)
     {
-        $user = Auth::user();
-
-        // ─── Tenant milik user ───────────────────────────────────────────────
-        $tenantIds = Tenant::where('email', $user->email)->pluck('id')
-            ->merge(
-                Tenant::whereHas('tenantRoleUsers.role', fn($q) => $q->where('id_user', $user->id))
-                    ->pluck('id')
-            )->unique();
+        $tenantIds = $this->tenantIds();
 
         // ─── Mulai Query ─────────────────────────────────────────────────────
         $query = BarangKeluar::with(['dataBarang.satuan'])
@@ -255,14 +219,13 @@ class PengelolaController extends Controller
 
             $query->where(function ($q) use ($search) {
                 $q->where('no_barangkeluar', 'like', "%{$search}%")
-                    ->orWhere('tanggal',         'like', "%{$search}%")
-                    ->orWhere('jumlah_keluar',   'like', "%{$search}%")
+                    ->orWhere('tanggal', 'like', "%{$search}%")
+                    ->orWhere('jumlah_keluar', 'like', "%{$search}%")
                     ->orWhereHas('dataBarang', function ($q2) use ($search) {
                         $q2->where('nama_barang', 'like', "%{$search}%")
                             ->orWhereHas(
                                 'satuan',
-                                fn($q3) =>
-                                $q3->where('nama', 'like', "%{$search}%")
+                                fn($q3) => $q3->where('nama', 'like', "%{$search}%")
                             );
                     });
             });
@@ -278,32 +241,13 @@ class PengelolaController extends Controller
         return view('laporankeluar', compact('barangKeluars', 'tenants'));
     }
 
-
-
-
-
-
     // Menampilkan daftar tenant di halaman namatenant
     public function showNamatenant()
     {
-        $user = Auth::user();
-
-        // Ambil tenant berdasarkan email langsung
-        $directTenants = Tenant::where('email', $user->email)->get();
-
-        // Ambil tenant berdasarkan relasi melalui TenantRoleUser
-        $relatedTenants = Tenant::whereHas('tenantRoleUsers', function ($query) use ($user) {
-            $query->whereHas('role', function ($subQuery) use ($user) {
-                $subQuery->where('id_user', $user->id);
-            });
-        })->get();
-
-        // Gabungkan hasil query
-        $tenants = $directTenants->merge($relatedTenants)->unique('id');
+        $tenants = Tenant::whereIn('id', $this->tenantIds())->get();
 
         return view('namatenant', compact('tenants'));
     }
-
 
     // Menampilkan daftar tenant
     public function index()
@@ -312,11 +256,9 @@ class PengelolaController extends Controller
         return view('pengelola', compact('tenants'));
     }
 
-
     // Menyimpan tenant baru ke database
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
             'nama_perusahaan' => 'required|string|max:255',
             'kode' => 'required|string|max:255|unique:tenants,kode',
@@ -331,8 +273,7 @@ class PengelolaController extends Controller
             return redirect()->back()->with('crud_error', 'Anda sudah mendaftar sebagai tenant!');
         }
 
-        // Jika belum ada, lanjutkan insert
-        Tenant::create([
+        $tenant = Tenant::create([
             'nama' => Auth::user()->nama,
             'email' => Auth::user()->email,
             'nama_perusahaan' => $request->nama_perusahaan,
@@ -342,9 +283,11 @@ class PengelolaController extends Controller
             'status' => 'pending'
         ]);
 
+        // Hubungkan pengelola ke tenant barunya
+        Auth::user()->update(['id_tenant' => $tenant->id]);
+
         return redirect()->route('pengelola')->with('crud_success', 'Tenant berhasil ditambahkan.');
     }
-
 
     // Menampilkan data tenant tertentu
     public function edit(Tenant $tenant)
@@ -370,7 +313,6 @@ class PengelolaController extends Controller
 
         return redirect()->route('pengelola')->with('crud_success', 'Tenant berhasil diperbarui.');
     }
-
 
     // Menghapus tenant dari database
     public function destroy(Tenant $tenant)
