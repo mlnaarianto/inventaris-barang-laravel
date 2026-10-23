@@ -22,21 +22,24 @@ class AuthController extends Controller
 
     protected function redirectByRole(User $user)
     {
-        if ($user->hasRole('admin')) {
+        // Urutan penting: dari permission paling eksklusif ke yang paling umum.
+        // pengelola juga punya databarang.view, jadi harus dicek sebelum 'user'.
+        if ($user->can('user.view')) {          // hanya admin
             return redirect()->route('dashboard');
         }
 
-        if ($user->hasRole('pengelola')) {
+        if ($user->can('tenant.view')) {        // pengelola
             return redirect()->route('pengelola');
         }
 
-        if ($user->hasRole('user')) {
+        if ($user->can('databarang.view')) {    // user biasa
             return redirect()->route('user');
         }
 
         Auth::logout();
 
-        return redirect()->route('login')->withErrors(['email' => 'Role tidak valid.']);
+        return redirect()->route('login')
+            ->withErrors(['email' => 'Akun Anda belum memiliki hak akses.']);
     }
 
     // ================= LOGIN MANUAL =================
