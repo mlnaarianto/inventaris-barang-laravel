@@ -126,36 +126,35 @@
 @endsection
 
 @push('scripts')
-<!-- Responsiveness Plugin -->
-<script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
-
-    <!-- DataTables CDN -->
+    <!-- jQuery lalu DataTables, baru plugin Responsive -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
 
     <script>
-       $('#tabelTenant').DataTable({
-    responsive: true,
-    language: {
-        search: "Cari:",
-        lengthMenu: "Tampilkan _MENU_ entri",
-        info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
-        paginate: {
-            first: "Awal",
-            last: "Akhir",
-            next: "Berikutnya",
-            previous: "Sebelumnya"
-        },
-        zeroRecords: "Tidak ada data ditemukan",
-        emptyTable: "Tidak ada data tersedia"
-    },
-    columnDefs: [{
-        orderable: false,
-        targets: [7]
-    }]
-});
-
+        $(document).ready(function() {
+            $('#tabelTenant').DataTable({
+                responsive: true,
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "Tampilkan _MENU_ entri",
+                    info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                    paginate: {
+                        first: "Awal",
+                        last: "Akhir",
+                        next: "Berikutnya",
+                        previous: "Sebelumnya"
+                    },
+                    zeroRecords: "Tidak ada data ditemukan",
+                    emptyTable: "Tidak ada data tersedia"
+                },
+                columnDefs: [{
+                    orderable: false,
+                    targets: [7]
+                }]
+            });
+        });
     </script>
 @endpush

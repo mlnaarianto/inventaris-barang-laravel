@@ -1,7 +1,12 @@
-<!-- resources/views/pengelola.blade.php -->
+{{-- resources/views/pengelola.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
+@php
+$bisaAksi = auth()->user()->canany(['tenant.update', 'tenant.delete']);
+$jumlahKolom = $bisaAksi ? 9 : 8;
+@endphp
+
 <div x-data="{ isOpen: false }" class="container mx-auto p-6">
 
     <div class="flex justify-between items-center mb-4">
@@ -10,15 +15,13 @@
             <span>Pendaftaran Tenant</span>
         </h1>
 
+        @can('tenant.create')
         @if ($tenants->isEmpty())
         <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
             onclick="openModal('addTenantModal')"> <i class="fas fa-plus"></i> Tambah Tenant</button>
         @endif
-
+        @endcan
     </div>
-
-
-
 
     <!-- Tabel Tenant -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden mt-6">
@@ -34,7 +37,9 @@
                         <th class="p-4">Telepon</th>
                         <th class="p-4 text-left">Alamat</th>
                         <th class="p-4">Status</th>
+                        @if ($bisaAksi)
                         <th class="p-4">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -61,13 +66,11 @@
                         </td>
                         <td class="p-4">
                             @if ($tenant->status == 'pending')
-                            <span
-                                class="px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
+                            <span class="px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
                                 <i class="fa-solid fa-clock mr-1"></i> Pending
                             </span>
                             @elseif ($tenant->status == 'aktif')
-                            <span
-                                class="px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                            <span class="px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                                 <i class="fa-solid fa-circle-check mr-1"></i> Aktif
                             </span>
                             @else
@@ -76,15 +79,20 @@
                             </span>
                             @endif
                         </td>
+                        @if ($bisaAksi)
                         <td class="p-4">
                             <div class="flex justify-center gap-2">
+                                @can('tenant.update')
                                 @if ($tenant->status === 'pending')
-                                <button onclick="editTenant({{ $tenant->id }})"
+                                <button type="button" onclick="editTenant({{ $tenant->id }})"
                                     class="px-3 py-1 text-sm font-semibold text-white bg-yellow-500 hover:bg-yellow-600 rounded-md shadow flex items-center space-x-1">
                                     <i class="fa-solid fa-pen"></i>
                                     <span>Edit</span>
                                 </button>
                                 @endif
+                                @endcan
+
+                                @can('tenant.delete')
                                 <form action="{{ route('pengelola.destroy', $tenant->id) }}" method="POST"
                                     onsubmit="return confirm('Hapus tenant ini? Semua user akan dilepas dari tenant.')">
                                     @csrf
@@ -95,12 +103,14 @@
                                         <span>Hapus</span>
                                     </button>
                                 </form>
+                                @endcan
                             </div>
                         </td>
+                        @endif
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="p-4 text-center text-gray-500">
+                        <td colspan="{{ $jumlahKolom }}" class="p-4 text-center text-gray-500">
                             <i class="fa-solid fa-folder-open mr-2"></i> Belum ada tenant yang ditambahkan.
                         </td>
                     </tr>
@@ -110,7 +120,7 @@
         </div>
     </div>
 
-
+    @can('tenant.create')
     <!-- Modal Tambah Tenant -->
     <div id="addTenantModal"
         class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 z-50">
@@ -123,7 +133,6 @@
                     <input type="text" name="nama" class="w-full border rounded p-2 bg-gray-200"
                         value="{{ auth()->user()->nama }}" readonly required>
                 </div>
-
                 <div class="mb-3">
                     <label class="block text-sm font-medium">Nama Perusahaan</label>
                     <input type="text" name="nama_perusahaan" class="w-full border rounded p-2" required>
@@ -153,7 +162,9 @@
             </form>
         </div>
     </div>
+    @endcan
 
+    @can('tenant.update')
     <!-- Modal Edit Tenant -->
     <div id="editTenantModal"
         class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 z-50">
@@ -196,38 +207,51 @@
                     class="ml-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
                     onclick="closeModal('editTenantModal')">Batal</button>
             </form>
-
         </div>
     </div>
+    @endcan
 
     <script>
         function openModal(id) {
-            let modal = document.getElementById(id);
+            const modal = document.getElementById(id);
+            if (!modal) return;
             modal.classList.remove('opacity-0', 'pointer-events-none');
             modal.classList.add('opacity-100');
         }
 
         function closeModal(id) {
-            let modal = document.getElementById(id);
+            const modal = document.getElementById(id);
+            if (!modal) return;
             modal.classList.remove('opacity-100');
             modal.classList.add('opacity-0', 'pointer-events-none');
         }
 
+        @can('tenant.update')
+
         function editTenant(id) {
-            fetch(`/pengelola/${id}/edit`)
-                .then(response => response.json())
+            fetch(`/pengelola/${id}/edit`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Gagal memuat data tenant');
+                    return response.json();
+                })
                 .then(data => {
                     document.getElementById('editTenantId').value = data.id;
                     document.getElementById('editNama').value = data.nama;
                     document.getElementById('editNamaPerusahaan').value = data.nama_perusahaan;
                     document.getElementById('editKode').value = data.kode;
                     document.getElementById('editEmail').value = data.email;
-                    document.getElementById('editTelepon').value = data.telepon;
-                    document.getElementById('editAlamat').value = data.alamat;
+                    document.getElementById('editTelepon').value = data.telepon ?? '';
+                    document.getElementById('editAlamat').value = data.alamat ?? '';
                     document.getElementById('editTenantForm').action = `/pengelola/${id}/update`;
-                    openModal('editTenantModal'); // Pastikan ini ID modal edit
-                });
+                    openModal('editTenantModal');
+                })
+                .catch(err => alert(err.message));
         }
+        @endcan
     </script>
 </div>
 @endsection

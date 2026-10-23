@@ -13,8 +13,19 @@ trait HasTenant
 
         static::creating(function ($model) {
             $user = Auth::user();
-            if ($user && !$model->id_tenant) {
+
+            // Seeder, artisan, dan queue berjalan tanpa user login: biarkan.
+            if (!$user) {
+                return;
+            }
+
+            // Tanpa tenant.bypass, tenant dipaksa mengikuti user (anti-spoof id_tenant).
+            if (!$user->can('tenant.bypass') || !$model->id_tenant) {
                 $model->id_tenant = $user->id_tenant;
+            }
+
+            if (!$model->id_tenant) {
+                abort(403, 'Akun Anda belum terhubung ke tenant, data tidak dapat dibuat.');
             }
         });
 
