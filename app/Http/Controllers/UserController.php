@@ -10,12 +10,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-
-
 class UserController extends Controller
 {
-
-
     public function changePassword(Request $request)
     {
         try {
@@ -33,13 +29,11 @@ class UserController extends Controller
                 'new_password.confirmed' => 'Konfirmasi password baru tidak cocok.',
             ]);
         } catch (ValidationException $e) {
-            // Ambil pesan error pertama untuk SweetAlert2
             $firstError = collect($e->errors())->flatten()->first();
             return back()->with('crud_error', $firstError)->withInput();
         }
 
         /** @var \App\Models\User $user */
-
         $user = Auth::user();
 
         if (!Hash::check($request->current_password, $user->password)) {
@@ -56,33 +50,22 @@ class UserController extends Controller
         return back()->with('crud_success', 'Password berhasil diubah.');
     }
 
-
-
     /**
      * Display the dashboard with user data.
      */
     public function index()
     {
-        $pengelolaCount = User::whereHas('role', function ($query) {
-            $query->where('role', 'pengelola');
-        })->count();
+        $pengelolaCount = User::role('pengelola')->count();
+        $userCount = User::role('user')->count();
 
-        $userCount = User::whereHas('role', function ($query) {
-            $query->where('role', 'user');
-        })->count();
+        // Semua user selain admin
+        $users = User::with('roles')->withoutRole('admin')->get();
 
-        // Ambil semua data user selain admin
-        $users = User::with('role')->whereDoesntHave('role', function ($query) {
-            $query->where('role', 'admin');
-        })->get();
-
-        // Hitung jumlah tenant berdasarkan status
         $tenantAktif = Tenant::where('status', 'aktif')->count();
         $tenantNonaktif = Tenant::where('status', 'nonaktif')->count();
 
         return view('dashboard', compact('pengelolaCount', 'userCount', 'users', 'tenantAktif', 'tenantNonaktif'));
     }
-
 
     /**
      * Store a newly created user in storage.
@@ -93,7 +76,7 @@ class UserController extends Controller
             'nama' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'role' => ['required', Rule::in(['pengelola', 'user'])], // Hapus 'admin'
+            'role' => ['required', Rule::in(['pengelola', 'user'])], // admin tidak boleh dibuat dari form
             'status' => ['required', Rule::in(['aktif', 'tidak_aktif', 'pending'])],
         ]);
 
@@ -101,15 +84,10 @@ class UserController extends Controller
             'nama' => $request->nama,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role, // Simpan langsung role yang dipilih
             'status' => $request->status,
         ]);
 
-
-        // Simpan role ke tabel roles
-        $user->role()->create([
-            'role' => $request->role,
-        ]);
+        $user->assignRole($request->role);
 
         return redirect()->route('dashboard')->with('crud_success', 'User berhasil ditambahkan!');
     }
@@ -131,9 +109,8 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
-        $user->role()->delete();
-        $user->delete();
+        // Relasi role ikut dilepas otomatis oleh trait HasRoles saat user dihapus
+        User::findOrFail($id)->delete();
 
         return redirect()->route('dashboard')->with('crud_success', 'User berhasil dihapus!');
     }

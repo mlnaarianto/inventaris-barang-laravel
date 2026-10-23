@@ -78,7 +78,7 @@
                             <td class="py-3 px-6">{{ $index + 1 }}</td>
                             <td class="py-3 px-6">{{ $user->nama }}</td>
                             <td class="py-3 px-6">{{ $user->email }}</td>
-                            <td class="py-3 px-6">{{ ucfirst($user->role) }}</td>
+                            <td class="py-3 px-6">{{ ucfirst($user->getRoleNames()->first() ?? '-') }}</td>
                             <td class="py-3 px-6">
                                 <span class="px-2 py-1 rounded text-white {{ $user->status === 'tidak_aktif' ? 'bg-red-500' : ($user->status === 'pending' ? 'bg-yellow-500' : 'bg-green-500') }}">
                                     {{ ucfirst(str_replace('_', ' ', $user->status)) }}

@@ -7,47 +7,33 @@ use App\Models\DataBarang;
 use App\Models\BarangMasuk;
 use App\Models\BarangKeluar;
 use App\Models\Satuan;
-
 use Illuminate\Support\Facades\Auth;
-
-use Illuminate\Http\Request;
 
 class IndexController extends Controller
 {
- 
+    public function index()
+    {
+        $user = Auth::user();
 
-public function index()
-{
-    $user = Auth::user();
+        // Tenant yang didaftarkan dengan email user, atau tertaut lewat users.id_tenant
+        $tenants = Tenant::where('email', $user->email)
+            ->when($user->id_tenant, fn($q) => $q->orWhere('id', $user->id_tenant))
+            ->get();
 
-    $directTenants = Tenant::where('email', $user->email)->get();
+        $jumlahBarang = DataBarang::count();
+        $jumlahBarangMasuk = BarangMasuk::sum('jumlah_masuk');
+        $jumlahBarangKeluar = BarangKeluar::sum('jumlah_keluar');
+        $jumlahSatuan = Satuan::count();
 
-    $relatedTenants = Tenant::whereHas('tenantRoleUsers', function ($query) use ($user) {
-        $query->whereHas('role', function ($subQuery) use ($user) {
-            $subQuery->where('id_user', $user->id);
-        });
-    })->get();
+        $databarangs = DataBarang::with(['satuan', 'jenisbarang'])->get();
 
-    $tenants = $directTenants->merge($relatedTenants)->unique('id');
-
-    // Hitung langsung tanpa load data
-    $jumlahBarang = DataBarang::count();
-    $jumlahBarangMasuk = BarangMasuk::sum('jumlah_masuk'); // asumsi ada kolom 'jumlah'
-    $jumlahBarangKeluar = BarangKeluar::sum('jumlah_keluar'); // asumsi ada kolom 'jumlah'
-    $jumlahSatuan = Satuan::count();
-
-    // Ambil data barang untuk ditampilkan di tabel
-    $databarangs = DataBarang::with(['satuan', 'jenisbarang'])->get();
-
-    return view('index', compact(
-        'tenants',
-        'databarangs',
-        'jumlahBarang',
-        'jumlahBarangMasuk',
-        'jumlahBarangKeluar',
-        'jumlahSatuan'
-    ));
-}
-
-    
+        return view('index', compact(
+            'tenants',
+            'databarangs',
+            'jumlahBarang',
+            'jumlahBarangMasuk',
+            'jumlahBarangKeluar',
+            'jumlahSatuan'
+        ));
+    }
 }
