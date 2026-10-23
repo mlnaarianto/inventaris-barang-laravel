@@ -17,29 +17,59 @@ class RolePermissionSeeder extends Seeder
         // ===== Daftar permission per modul =====
         $permissions = [
             // master data
-            'databarang.view', 'databarang.create', 'databarang.update', 'databarang.delete',
-            'jenisbarang.view', 'jenisbarang.create', 'jenisbarang.update', 'jenisbarang.delete',
-            'satuan.view', 'satuan.create', 'satuan.update', 'satuan.delete',
+            'databarang.view',
+            'databarang.create',
+            'databarang.update',
+            'databarang.delete',
+            'jenisbarang.view',
+            'jenisbarang.create',
+            'jenisbarang.update',
+            'jenisbarang.delete',
+            'satuan.view',
+            'satuan.create',
+            'satuan.update',
+            'satuan.delete',
 
             // transaksi
-            'barangmasuk.view', 'barangmasuk.create', 'barangmasuk.update', 'barangmasuk.delete',
-            'barangkeluar.view', 'barangkeluar.create', 'barangkeluar.update', 'barangkeluar.delete',
+            'barangmasuk.view',
+            'barangmasuk.create',
+            'barangmasuk.update',
+            'barangmasuk.delete',
+            'barangkeluar.view',
+            'barangkeluar.create',
+            'barangkeluar.update',
+            'barangkeluar.delete',
 
             // laporan
-            'laporan.view', 'laporan.export',
+            'laporan.view',
+            'laporan.export',
 
             // tenant milik pengelola
-            'tenant.view', 'tenant.create', 'tenant.update', 'tenant.delete',
+            'tenant.view',
+            'tenant.create',
+            'tenant.update',
+            'tenant.delete',
 
             // anggota tenant (dikelola pengelola)
-            'member.view', 'member.create', 'member.delete',
+            'member.view',
+            'member.create',
+            'member.delete',
 
             // administrasi (khusus admin)
             'tenant.approve',
-            'user.view', 'user.create', 'user.update', 'user.delete',
+            'user.view',
+            'user.create',
+            'user.update',
+            'user.delete',
 
             // lintas tenant (dipakai TenantScope)
             'tenant.bypass',
+
+            // manajemen role (khusus admin)
+            'role.view',
+            'role.create',
+            'role.update',
+            'role.delete',
         ];
 
         foreach ($permissions as $name) {
@@ -56,14 +86,35 @@ class RolePermissionSeeder extends Seeder
 
         // pengelola: master data, transaksi, laporan, tenant sendiri, anggota tenant
         $pengelola->syncPermissions([
-            'databarang.view', 'databarang.create', 'databarang.update', 'databarang.delete',
-            'jenisbarang.view', 'jenisbarang.create', 'jenisbarang.update', 'jenisbarang.delete',
-            'satuan.view', 'satuan.create', 'satuan.update', 'satuan.delete',
-            'barangmasuk.view', 'barangmasuk.create', 'barangmasuk.update', 'barangmasuk.delete',
-            'barangkeluar.view', 'barangkeluar.create', 'barangkeluar.update', 'barangkeluar.delete',
-            'laporan.view', 'laporan.export',
-            'tenant.view', 'tenant.create', 'tenant.update', 'tenant.delete',
-            'member.view', 'member.create', 'member.delete',
+            'databarang.view',
+            'databarang.create',
+            'databarang.update',
+            'databarang.delete',
+            'jenisbarang.view',
+            'jenisbarang.create',
+            'jenisbarang.update',
+            'jenisbarang.delete',
+            'satuan.view',
+            'satuan.create',
+            'satuan.update',
+            'satuan.delete',
+            'barangmasuk.view',
+            'barangmasuk.create',
+            'barangmasuk.update',
+            'barangmasuk.delete',
+            'barangkeluar.view',
+            'barangkeluar.create',
+            'barangkeluar.update',
+            'barangkeluar.delete',
+            'laporan.view',
+            'laporan.export',
+            'tenant.view',
+            'tenant.create',
+            'tenant.update',
+            'tenant.delete',
+            'member.view',
+            'member.create',
+            'member.delete',
         ]);
 
         // user: melihat data dan mencatat transaksi dasar
@@ -71,8 +122,10 @@ class RolePermissionSeeder extends Seeder
             'databarang.view',
             'jenisbarang.view',
             'satuan.view',
-            'barangmasuk.view', 'barangmasuk.create',
-            'barangkeluar.view', 'barangkeluar.create',
+            'barangmasuk.view',
+            'barangmasuk.create',
+            'barangkeluar.view',
+            'barangkeluar.create',
             'laporan.view',
         ]);
     }

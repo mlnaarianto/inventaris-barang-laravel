@@ -13,6 +13,9 @@ use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\BarangKeluarController;
 
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RolePermissionController;
+
 // Route Home
 Route::view('/', 'home')->name('home');
 
@@ -76,11 +79,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/user', [IndexController::class, 'index'])->name('user');
         Route::get('/namatenant', [PengelolaController::class, 'showNamatenant'])->name('namatenant');
 
-        Route::get('/satuan', [SatuanController::class, 'index'])->name('satuan.index');
-        Route::post('/satuan', [SatuanController::class, 'store'])->name('satuan.store');
-        Route::get('/satuan/{id}/edit', [SatuanController::class, 'edit'])->name('satuan.edit');
-        Route::put('/satuan/{id}', [SatuanController::class, 'update'])->name('satuan.update');
-        Route::delete('/satuan/{id}', [SatuanController::class, 'destroy'])->name('satuan.destroy');
+        Route::controller(SatuanController::class)->prefix('satuan')->name('satuan.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('permission:satuan.view');
+            Route::post('/', 'store')->name('store')->middleware('permission:satuan.create');
+            Route::get('/{id}/edit', 'edit')->name('edit')->middleware('permission:satuan.update');
+            Route::put('/{id}', 'update')->name('update')->middleware('permission:satuan.update');
+            Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:satuan.delete');
+        });
 
         Route::prefix('databarang')->name('databarangs.')->group(function () {
             Route::get('/', [DatabarangController::class, 'index'])->name('index');
@@ -109,5 +114,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/barangkeluar/{id}/edit', [BarangKeluarController::class, 'edit'])->name('barangkeluar.edit');
         Route::put('/barangkeluar/{id}', [BarangKeluarController::class, 'update'])->name('barangkeluar.update');
         Route::delete('/barangkeluar/{id}', [BarangKeluarController::class, 'destroy'])->name('barangkeluar.destroy');
+    });
+
+    Route::controller(RoleController::class)->prefix('roles')->name('roles.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('permission:role.view');
+        Route::get('/create', 'create')->name('create')->middleware('permission:role.create');
+        Route::post('/', 'store')->name('store')->middleware('permission:role.create');
+        Route::get('/{role}/edit', 'edit')->name('edit')->middleware('permission:role.update');
+        Route::put('/{role}', 'update')->name('update')->middleware('permission:role.update');
+        Route::delete('/{role}', 'destroy')->name('destroy')->middleware('permission:role.delete');
+
+        Route::get('/{role}/permissions', [RolePermissionController::class, 'edit'])
+            ->name('permissions.edit')->middleware('permission:role.update');
+        Route::put('/{role}/permissions', [RolePermissionController::class, 'update'])
+            ->name('permissions.update')->middleware('permission:role.update');
     });
 });
