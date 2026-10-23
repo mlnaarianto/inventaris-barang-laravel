@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
-            $table->enum('role', ['admin', 'pengelola', 'user'])->default('user');
             $table->enum('status', ['aktif', 'tidak_aktif', 'pending'])->default('pending');
             $table->string('google_id')->nullable()->unique(); // Menambahkan kolom untuk ID Google
             $table->string('avatar')->nullable(); // Menambahkan kolom untuk avatar dari Google
