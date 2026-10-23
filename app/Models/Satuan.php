@@ -19,6 +19,6 @@ class Satuan extends Model
 
     public function databarangs()
     {
-        return $this->hasMany(Databarang::class, 'id_satuan');
+        return $this->hasMany(DataBarang::class, 'id_satuan');
     }
 }

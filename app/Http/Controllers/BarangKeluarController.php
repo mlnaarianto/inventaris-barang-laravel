@@ -47,7 +47,7 @@ class BarangKeluarController extends Controller
             'jumlah_keluar' => 'required|integer|min:1',
         ]);
 
-        $dataBarang = Databarang::findOrFail($request->id_databarang);
+        $dataBarang = DataBarang::findOrFail($request->id_databarang);
 
         if ($request->jumlah_keluar > $dataBarang->stok) {
             return redirect()->back()
@@ -74,7 +74,7 @@ class BarangKeluarController extends Controller
     public function edit($id)
     {
         $barangkeluar = BarangKeluar::with('dataBarang')->findOrFail($id);
-        $databarangs = Databarang::all();
+        $databarangs = DataBarang::all();
 
         return view('barangkeluar.edit', compact('barangkeluar', 'databarangs'));
     }
@@ -94,7 +94,7 @@ class BarangKeluarController extends Controller
 
         if ($oldIdDataBarang == $request->id_databarang) {
             $selisih = $request->jumlah_keluar - $oldJumlahKeluar;
-            $dataBarang = Databarang::find($request->id_databarang);
+            $dataBarang = DataBarang::find($request->id_databarang);
 
             if ($selisih > 0 && $selisih > $dataBarang->stok) {
                 return redirect()->back()->with('crud_error', 'Stok tidak mencukupi untuk perubahan jumlah keluar.')->withInput();
@@ -109,8 +109,8 @@ class BarangKeluarController extends Controller
             $dataBarang->stok -= $selisih;
             $dataBarang->save();
         } else {
-            $oldBarang = Databarang::find($oldIdDataBarang);
-            $newBarang = Databarang::find($request->id_databarang);
+            $oldBarang = DataBarang::find($oldIdDataBarang);
+            $newBarang = DataBarang::find($request->id_databarang);
 
             if ($request->jumlah_keluar > $newBarang->stok) {
                 return redirect()->back()->with('crud_error', 'Stok tidak mencukupi untuk barang baru yang dipilih.')->withInput();
@@ -136,7 +136,7 @@ class BarangKeluarController extends Controller
     {
         $barangkeluar = BarangKeluar::findOrFail($id);
 
-        $dataBarang = Databarang::find($barangkeluar->id_databarang);
+        $dataBarang = DataBarang::find($barangkeluar->id_databarang);
         if ($dataBarang) {
             $dataBarang->stok += $barangkeluar->jumlah_keluar;
             $dataBarang->save();

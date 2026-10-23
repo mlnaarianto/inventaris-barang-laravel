@@ -31,11 +31,11 @@ class DataBarang extends Model
     }
 
     /**
-     * Relasi ke model Jenisbarang
+     * Relasi ke model JenisBarang
      */
     public function jenisbarang()
     {
-        return $this->belongsTo(Jenisbarang::class, 'id_jenisbarang');
+        return $this->belongsTo(JenisBarang::class, 'id_jenisbarang');
     }
 
     /**

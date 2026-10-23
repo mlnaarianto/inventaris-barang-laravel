@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Databarang;
+use App\Models\DataBarang;
 use App\Models\Tenant;
 use App\Models\Satuan;
-use App\Models\Jenisbarang;
+use App\Models\JenisBarang;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -34,7 +34,7 @@ class DatabarangController extends Controller
             abort(404, 'Tenant tidak ditemukan untuk user ini.');
         }
 
-        $databarangs = Databarang::with(['satuan', 'jenisbarang'])
+        $databarangs = DataBarang::with(['satuan', 'jenisbarang'])
             ->where('id_tenant', $tenant->id)
             ->get();
 
@@ -63,7 +63,7 @@ class DatabarangController extends Controller
             }
 
             // Cek unik dalam tenant
-            $exists = Databarang::where('id_tenant', $tenant->id)
+            $exists = DataBarang::where('id_tenant', $tenant->id)
                 ->where('id_barang', $request->id_barang)
                 ->exists();
 
@@ -73,7 +73,7 @@ class DatabarangController extends Controller
                     ->withInput();
             }
 
-            Databarang::create([
+            DataBarang::create([
                 'id_barang' => $request->id_barang,
                 'nama_barang' => $request->nama_barang,
                 'stok' => $request->stok,
@@ -103,7 +103,7 @@ class DatabarangController extends Controller
             return redirect()->route('databarangs.index')->with('crud_error', 'Tenant tidak ditemukan.');
         }
 
-        $databarang = Databarang::where('id', $id)
+        $databarang = DataBarang::where('id', $id)
             ->where('id_tenant', $tenant->id)
             ->first();
 
@@ -112,7 +112,7 @@ class DatabarangController extends Controller
         }
 
         $satuans = Satuan::all();
-        $jenisbarangs = Jenisbarang::all();
+        $jenisbarangs = JenisBarang::all();
 
         return view('databarangs.edit', compact('databarang', 'satuans', 'jenisbarangs'));
     }
@@ -127,7 +127,7 @@ class DatabarangController extends Controller
             return redirect()->route('databarangs.index')->with('crud_error', 'Tenant tidak ditemukan.');
         }
 
-        $databarang = Databarang::where('id', $id)
+        $databarang = DataBarang::where('id', $id)
             ->where('id_tenant', $tenant->id)
             ->first();
 
@@ -147,7 +147,7 @@ class DatabarangController extends Controller
 
 
             // Cek apakah id_barang unik dalam tenant, kecuali untuk record ini sendiri
-            $exists = Databarang::where('id_tenant', $tenant->id)
+            $exists = DataBarang::where('id_tenant', $tenant->id)
                 ->where('id_barang', $request->id_barang)
                 ->where('id', '!=', $databarang->id)
                 ->exists();
@@ -187,7 +187,7 @@ class DatabarangController extends Controller
             return redirect()->route('databarangs.index')->with('crud_error', 'Tenant tidak ditemukan.');
         }
 
-        $databarang = Databarang::where('id', $id)
+        $databarang = DataBarang::where('id', $id)
             ->where('id_tenant', $tenant->id)
             ->first();
 

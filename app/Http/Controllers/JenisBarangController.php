@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JenisBarang;
-use App\Models\Databarang;
+use App\Models\DataBarang;
 use Illuminate\Http\Request;
 
 class JenisBarangController extends Controller
@@ -52,7 +52,7 @@ class JenisBarangController extends Controller
     {
         $jenisbarang = JenisBarang::findOrFail($id); // hanya milik tenant aktif
 
-        $isUsed = Databarang::where('id_jenisbarang', $id)->exists();
+        $isUsed = DataBarang::where('id_jenisbarang', $id)->exists();
         if ($isUsed) {
             return redirect()->route('jenisbarangs.index')->with('crud_error', 'Data tidak dapat dihapus karena masih digunakan pada data barang.');
         }

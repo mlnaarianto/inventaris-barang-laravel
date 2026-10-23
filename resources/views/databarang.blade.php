@@ -78,7 +78,7 @@
                                     </select>
 
                                     <select name="id_jenisbarang" class="w-full mb-3 p-2 border rounded" required>
-                                        @foreach (\App\Models\Jenisbarang::all() as $jenis)
+                                        @foreach (\App\Models\JenisBarang::all() as $jenis)
                                             <option value="{{ $jenis->id }}"
                                                 @if ($jenis->id == $barang->id_jenisbarang) selected @endif>
                                                 {{ $jenis->jenis_barang }}</option>

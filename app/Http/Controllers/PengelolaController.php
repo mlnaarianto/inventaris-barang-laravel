@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\BarangMasuk;
 use App\Models\BarangKeluar;
-use App\Models\Databarang;
+use App\Models\DataBarang;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
 
 class PengelolaController extends Controller
 {
@@ -27,6 +30,14 @@ class PengelolaController extends Controller
             ->values();
     }
 
+    /**
+     * Pastikan tenant ini milik user yang login (isolasi antar pengelola).
+     */
+    protected function pastikanMilik(Tenant $tenant): void
+    {
+        abort_unless($this->tenantIds()->contains($tenant->id), 403);
+    }
+
     public function indexLaporanStok(Request $request)
     {
         $tenantIds = $this->tenantIds();
@@ -34,7 +45,7 @@ class PengelolaController extends Controller
         // Tenant untuk dropdown filter
         $tenants = Tenant::whereIn('id', $tenantIds)->get();
 
-        $query = Databarang::with('satuan')
+        $query = DataBarang::with('satuan')
             ->whereIn('id_tenant', $tenantIds);
 
         if ($request->filled('id_tenant')) {
@@ -266,7 +277,7 @@ class PengelolaController extends Controller
             'alamat' => 'nullable|string'
         ]);
 
-        // Cek apakah tenant dengan email user sudah ada
+        // Satu pengelola, satu tenant
         $existingTenant = Tenant::where('email', Auth::user()->email)->first();
 
         if ($existingTenant) {
@@ -292,24 +303,25 @@ class PengelolaController extends Controller
     // Menampilkan data tenant tertentu
     public function edit(Tenant $tenant)
     {
+        $this->pastikanMilik($tenant);
+
         return response()->json($tenant);
     }
 
     // Memperbarui data tenant di database
     public function update(Request $request, Tenant $tenant)
     {
-        $request->validate([
-            'nama' => 'required|string|max:255',
+        $this->pastikanMilik($tenant);
+
+        // Email, nama, dan status sengaja tidak bisa diubah di sini
+        $data = $request->validate([
             'nama_perusahaan' => 'required|string|max:255',
             'kode' => 'required|string|max:255|unique:tenants,kode,' . $tenant->id,
-            'email' => 'required|email|unique:tenants,email,' . $tenant->id,
             'telepon' => 'nullable|string|max:20',
             'alamat' => 'nullable|string',
         ]);
 
-        // Simpan semua data kecuali status agar tetap pending
-        $updateData = $request->except(['status']);
-        $tenant->update($updateData);
+        $tenant->update($data);
 
         return redirect()->route('pengelola')->with('crud_success', 'Tenant berhasil diperbarui.');
     }
@@ -317,7 +329,36 @@ class PengelolaController extends Controller
     // Menghapus tenant dari database
     public function destroy(Tenant $tenant)
     {
-        $tenant->delete();
+        $this->pastikanMilik($tenant);
+
+        // Lapis 1: blokir dengan pesan jelas kalau tenant sudah punya data
+        foreach (['databarangs', 'barangmasuks', 'barangkeluars'] as $tabel) {
+            if (DB::table($tabel)->where('id_tenant', $tenant->id)->exists()) {
+                return redirect()->route('pengelola')->with(
+                    'crud_error',
+                    'Tenant tidak bisa dihapus karena masih memiliki data barang atau transaksi.'
+                );
+            }
+        }
+
+        // Lapis 2: pengaman kalau ada tabel lain yang masih terhubung (foreign key)
+        try {
+            DB::transaction(function () use ($tenant) {
+                // Lepaskan semua user (termasuk pengelola) dari tenant ini
+                User::where('id_tenant', $tenant->id)->update(['id_tenant' => null]);
+                $tenant->delete();
+            });
+        } catch (QueryException $e) {
+            if ((string) $e->getCode() === '23000') {
+                return redirect()->route('pengelola')->with(
+                    'crud_error',
+                    'Tenant tidak bisa dihapus karena masih terhubung dengan data lain.'
+                );
+            }
+
+            throw $e; // error database lain tetap dilaporkan, jangan disembunyikan
+        }
+
         return redirect()->route('pengelola')->with('crud_success', 'Tenant berhasil dihapus.');
     }
 }

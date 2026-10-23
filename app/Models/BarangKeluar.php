@@ -22,6 +22,6 @@ class BarangKeluar extends Model
 
     public function dataBarang()
     {
-        return $this->belongsTo(Databarang::class, 'id_databarang');
+        return $this->belongsTo(DataBarang::class, 'id_databarang');
     }
 }

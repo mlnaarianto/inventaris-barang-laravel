@@ -1,20 +1,17 @@
 <?php
 
-
-use App\Http\Controllers\TenantRoleUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\IndexController;
 use App\Http\Controllers\PengelolaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TenantUserController;
+use App\Http\Controllers\TenantMemberController;
 use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\DatabarangController;
 use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\BarangKeluarController;
-
-
 
 // Route Home
 Route::view('/', 'home')->name('home');
@@ -26,17 +23,13 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
-
-    // Route untuk Google OAuth
-
 });
+
 Route::get('/verify-otp', [AuthController::class, 'showOtpForm'])->name('verify.otp.form');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('verify.otp');
-
 Route::post('/resend-otp', [AuthController::class, 'resendOtpSession'])->name('resend.otp.session');
 
-
-
+// Route untuk Google OAuth
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
@@ -45,7 +38,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/change-password', [UserController::class, 'changePassword'])->name('password.change');
 
-
     // Manajemen Pengguna (hanya untuk admin)
     Route::middleware('role:admin')->group(function () {
         Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard');
@@ -53,8 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
-
-        //manajemen tenant
+        // Manajemen tenant (aktifkan / nonaktifkan oleh admin)
         Route::get('/tenantuser', [TenantUserController::class, 'index'])->name('tenantuser.index');
         Route::post('/tenantuser/{tenant}/approve', [TenantUserController::class, 'approve'])->name('tenantuser.approve');
         Route::post('/tenantuser/{tenant}/reject', [TenantUserController::class, 'reject'])->name('tenantuser.reject');
@@ -68,17 +59,11 @@ Route::middleware('auth')->group(function () {
         Route::put('/pengelola/{tenant}/update', [PengelolaController::class, 'update'])->name('pengelola.update');
         Route::delete('/pengelola/{tenant}/delete', [PengelolaController::class, 'destroy'])->name('pengelola.destroy');
 
-
-        Route::prefix('tenantroleusers')->group(function () {
-            Route::get('/', [TenantRoleUserController::class, 'index'])->name('tenantroleusers.index');
-            Route::post('/', [TenantRoleUserController::class, 'store'])->name('tenantroleusers.store');
-            Route::get('/edit/{id}', [TenantRoleUserController::class, 'edit'])->name('tenantroleusers.edit');
-            Route::put('/update/{id}', [TenantRoleUserController::class, 'update'])->name('tenantroleusers.update');
-            Route::delete('/delete/{id}', [TenantRoleUserController::class, 'destroy'])->name('tenantroleusers.destroy');
-        });
+        Route::get('/tenantmembers', [TenantMemberController::class, 'index'])->name('tenantmembers.index');
+        Route::post('/tenantmembers', [TenantMemberController::class, 'store'])->name('tenantmembers.store');
+        Route::delete('/tenantmembers/{user}', [TenantMemberController::class, 'destroy'])->name('tenantmembers.destroy');
 
         Route::get('/laporanbarangmasuk/pdf', [PengelolaController::class, 'cetakLaporanBarangMasuk'])->name('laporanbarangmasuk.pdf');
-        // routes/web.php
         Route::get('/laporanbarangkeluar/pdf', [PengelolaController::class, 'cetakLaporanBarangKeluar'])->name('laporanbarangkeluar.pdf');
 
         Route::get('/laporanbarangmasuk', [PengelolaController::class, 'indexLaporanBarangMasuk'])->name('laporanbarangmasuk');
@@ -90,8 +75,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:user')->group(function () {
         Route::get('/user', [IndexController::class, 'index'])->name('user');
         Route::get('/namatenant', [PengelolaController::class, 'showNamatenant'])->name('namatenant');
-
-
 
         Route::get('/satuan', [SatuanController::class, 'index'])->name('satuan.index');
         Route::post('/satuan', [SatuanController::class, 'store'])->name('satuan.store');
@@ -113,7 +96,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/jenisbarang/{id}', [JenisBarangController::class, 'update'])->name('jenisbarangs.update');
         Route::delete('/jenisbarang/{id}', [JenisBarangController::class, 'destroy'])->name('jenisbarangs.destroy');
 
-
         Route::prefix('barangmasuk')->group(function () {
             Route::get('/', [BarangMasukController::class, 'index'])->name('barangmasuk.index');
             Route::post('/', [BarangMasukController::class, 'store'])->name('barangmasuk.store');
@@ -123,17 +105,9 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/barangkeluar', [BarangKeluarController::class, 'index'])->name('barangkeluar.index');
-
-        // Simpan barang keluar baru
         Route::post('/barangkeluar', [BarangKeluarController::class, 'store'])->name('barangkeluar.store');
-
-        // Tampilkan form edit (sebenarnya kamu tidak pakai karena modal, tapi tetap buat)
         Route::get('/barangkeluar/{id}/edit', [BarangKeluarController::class, 'edit'])->name('barangkeluar.edit');
-
-        // Update data barang keluar
         Route::put('/barangkeluar/{id}', [BarangKeluarController::class, 'update'])->name('barangkeluar.update');
-
-        // Hapus data barang keluar
         Route::delete('/barangkeluar/{id}', [BarangKeluarController::class, 'destroy'])->name('barangkeluar.destroy');
     });
 });
