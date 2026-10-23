@@ -31,11 +31,11 @@ trait HasTenant
     {
         $user = Auth::user();
 
-        if (!$user || $user->hasRole('admin')) {
+        if (!$user || $user->can('tenant.bypass')) {
             return;
         }
 
-        if ($user->id_tenant !== $model->id_tenant) {
+        if ((int) $user->id_tenant !== (int) $model->id_tenant) {
             abort(403, "Akses ditolak (tenant tidak cocok saat $aksi).");
         }
     }

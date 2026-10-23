@@ -13,14 +13,14 @@ class TenantScope implements Scope
     {
         $user = Auth::user();
 
-        if (!$user || $user->hasRole('admin')) {
+        if (!$user || $user->can('tenant.bypass')) {
             return;
         }
 
         if ($user->id_tenant) {
             $builder->where($model->getTable() . '.id_tenant', $user->id_tenant);
         } else {
-            // user biasa tanpa tenant tidak boleh melihat data apa pun
+            // user tanpa tenant tidak boleh melihat data apa pun
             $builder->whereRaw('1 = 0');
         }
     }

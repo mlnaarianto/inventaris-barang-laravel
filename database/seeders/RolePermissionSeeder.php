@@ -28,11 +28,17 @@ class RolePermissionSeeder extends Seeder
             // laporan
             'laporan.view', 'laporan.export',
 
-            // administrasi
+            // tenant milik pengelola
             'tenant.view', 'tenant.create', 'tenant.update', 'tenant.delete',
+
+            // anggota tenant (dikelola pengelola)
+            'member.view', 'member.create', 'member.delete',
+
+            // administrasi (khusus admin)
+            'tenant.approve',
             'user.view', 'user.create', 'user.update', 'user.delete',
 
-            // khusus: boleh melihat data lintas tenant (dipakai TenantScope nanti)
+            // lintas tenant (dipakai TenantScope)
             'tenant.bypass',
         ];
 
@@ -40,15 +46,15 @@ class RolePermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
         }
 
-        // ===== Role dan pemetaan permission =====
-        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        // ===== Role =====
+        $admin     = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $pengelola = Role::firstOrCreate(['name' => 'pengelola', 'guard_name' => 'web']);
-        $user = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+        $user      = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
 
         // admin: semuanya
         $admin->syncPermissions(Permission::all());
 
-        // pengelola: kelola barang dan transaksi di tenant-nya, tanpa tenant.bypass
+        // pengelola: master data, transaksi, laporan, tenant sendiri, anggota tenant
         $pengelola->syncPermissions([
             'databarang.view', 'databarang.create', 'databarang.update', 'databarang.delete',
             'jenisbarang.view', 'jenisbarang.create', 'jenisbarang.update', 'jenisbarang.delete',
@@ -56,6 +62,8 @@ class RolePermissionSeeder extends Seeder
             'barangmasuk.view', 'barangmasuk.create', 'barangmasuk.update', 'barangmasuk.delete',
             'barangkeluar.view', 'barangkeluar.create', 'barangkeluar.update', 'barangkeluar.delete',
             'laporan.view', 'laporan.export',
+            'tenant.view', 'tenant.create', 'tenant.update', 'tenant.delete',
+            'member.view', 'member.create', 'member.delete',
         ]);
 
         // user: melihat data dan mencatat transaksi dasar
