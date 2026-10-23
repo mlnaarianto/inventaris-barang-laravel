@@ -7,7 +7,7 @@
     </div>
     <div class="relative" x-data="{ open: false, showModal: false }">
         <button @click="open = !open" class="flex items-center space-x-4 focus:outline-none">
-            <span class="text-sm">{{ Auth::user()->nama }} ({{ Auth::user()->role }})</span>
+            <span class="text-sm">{{ Auth::user()->nama }} ({{ Auth::user()->getRoleNames()->first() }})</span>
             <img src="{{ Auth::user()->avatar_url }}"
                 onerror="this.src='{{ asset('images/1.jpg') }}'"
                 class="rounded-full w-8 h-8 object-cover"
