@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Databarang;
-use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\Satuan;
 use App\Models\Jenisbarang;
-use App\Models\TenantRoleUser;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -18,20 +16,7 @@ class DatabarangController extends Controller
      */
     protected function getCurrentTenant()
     {
-        $user = Auth::user();
-
-        // Pastikan role-nya model, bukan string
-        $role = Role::where('id_user', $user->id)->first();
-        if (!$role) {
-            return null;
-        }
-
-        $tenantRoleUser = TenantRoleUser::where('id_role', $role->id)->first();
-        if (!$tenantRoleUser) {
-            return null;
-        }
-
-        return Tenant::find($tenantRoleUser->id_tenant);
+        return Auth::user()?->tenant;
     }
 
 

@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BarangMasuk;
 use App\Models\DataBarang;
-use App\Models\Role;
 use App\Models\Tenant;
-use App\Models\TenantRoleUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,16 +15,9 @@ class BarangMasukController extends Controller
      */
     protected function getCurrentTenant()
     {
-        $user = Auth::user();
-        $role = Role::where('id_user', $user->id)->first();
-        if (!$role) return null;
-
-        $tenantRoleUser = TenantRoleUser::where('id_role', $role->id)->first();
-        if (!$tenantRoleUser) return null;
-
-        return Tenant::find($tenantRoleUser->id_tenant);
+        return Auth::user()?->tenant;
     }
-    
+
 
     public function index()
     {

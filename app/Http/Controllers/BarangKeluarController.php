@@ -26,11 +26,10 @@ class BarangKeluarController extends Controller
         if (!$user) return null;
 
         // Ambil id_tenant dari relasi user
-        $tenantId = $this->getTenantIdFromUser($user->id);
-
+        $tenantId = $user->id_tenant;
         $last = BarangKeluar::where('id_tenant', $tenantId)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+            ->orderBy('created_at', 'desc')
+            ->first();
 
         $lastNumber = 0;
         if ($last) {
@@ -153,11 +152,6 @@ class BarangKeluarController extends Controller
      */
     private function getTenantIdFromUser($userId)
     {
-        $role = \App\Models\Role::where('id_user', $userId)->first();
-        if ($role) {
-            $tenantRoleUser = \App\Models\TenantRoleUser::where('id_role', $role->id)->first();
-            return $tenantRoleUser?->id_tenant;
-        }
-        return null;
+        return Auth::user()?->id_tenant;
     }
 }
