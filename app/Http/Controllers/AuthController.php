@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +18,27 @@ use Carbon\Carbon;
 
 class AuthController extends Controller
 {
+    // ================= HELPER REDIRECT =================
+
+    protected function redirectByRole(User $user)
+    {
+        if ($user->hasRole('admin')) {
+            return redirect()->route('dashboard');
+        }
+
+        if ($user->hasRole('pengelola')) {
+            return redirect()->route('pengelola');
+        }
+
+        if ($user->hasRole('user')) {
+            return redirect()->route('user');
+        }
+
+        Auth::logout();
+
+        return redirect()->route('login')->withErrors(['email' => 'Role tidak valid.']);
+    }
+
     // ================= LOGIN MANUAL =================
 
     public function showLogin()
@@ -42,12 +62,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return match ($user->role) {
-                'admin' => redirect()->route('dashboard'),
-                'pengelola' => redirect()->route('pengelola'),
-                'user' => redirect()->route('user'),
-                default => redirect()->route('login')->withErrors(['email' => 'Role tidak valid.']),
-            };
+            return $this->redirectByRole(Auth::user());
         }
 
         return back()->withErrors(['email' => 'Email atau password salah.']);
@@ -77,7 +92,7 @@ class AuthController extends Controller
 
         $otp = rand(100000, 999999);
 
-        // 🔥 Simpan ke session, bukan database
+        // Simpan ke session, bukan database
         session([
             'register_data' => [
                 'nama' => $data['nama'],
@@ -97,7 +112,6 @@ class AuthController extends Controller
         return redirect()->route('verify.otp.form');
     }
 
-
     // ================= VERIFIKASI OTP =================
 
     public function showOtpForm()
@@ -108,7 +122,6 @@ class AuthController extends Controller
 
         return view('auth.verify-otp');
     }
-
 
     public function verifyOtp(Request $request)
     {
@@ -130,35 +143,23 @@ class AuthController extends Controller
             return back()->withErrors(['otp' => 'OTP sudah kadaluarsa']);
         }
 
-        // 🔥 Baru buat user setelah OTP benar
+        // Baru buat user setelah OTP benar
         $user = User::create([
             'nama' => $data['nama'],
             'email' => $data['email'],
             'password' => $data['password'],
-            'role' => $data['role'],
             'status' => 'aktif',
             'email_verified_at' => now(),
         ]);
 
-        Role::create([
-            'id_user' => $user->id,
-            'role' => $data['role'],
-        ]);
+        $user->assignRole($data['role']);
 
-        // Hapus session
         session()->forget('register_data');
 
         Auth::login($user);
 
-        return match ($user->role) {
-            'admin' => redirect()->route('dashboard'),
-            'pengelola' => redirect()->route('pengelola'),
-            'user' => redirect()->route('user'),
-            default => redirect()->route('login'),
-        };
+        return $this->redirectByRole($user);
     }
-
-
 
     public function resendOtpSession()
     {
@@ -183,8 +184,6 @@ class AuthController extends Controller
         return back()->with('success', 'OTP baru telah dikirim.');
     }
 
-
-
     // ================= LOGIN GOOGLE =================
 
     public function redirectToGoogle()
@@ -192,90 +191,80 @@ class AuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
- public function handleGoogleCallback()
-{
-    try {
-        $googleUser = Socialite::driver('google')->stateless()->user();
-
-        $user = User::where('email', $googleUser->getEmail())->first();
-
-        $avatarPath = null;
-
+    public function handleGoogleCallback()
+    {
         try {
-            $avatarUrl = $googleUser->getAvatar();
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
-            if ($avatarUrl) {
-                $avatarContents = Http::get($avatarUrl)->body();
+            $user = User::where('email', $googleUser->getEmail())->first();
 
-                $filename = 'avatars/' . Str::uuid() . '.jpg';
+            $avatarPath = null;
 
-                // 🔥 hapus avatar lama kalau ada
-                if ($user && $user->avatar && Storage::disk('public')->exists($user->avatar)) {
-                    Storage::disk('public')->delete($user->avatar);
+            try {
+                $avatarUrl = $googleUser->getAvatar();
+
+                if ($avatarUrl) {
+                    $avatarContents = Http::get($avatarUrl)->body();
+
+                    $filename = 'avatars/' . Str::uuid() . '.jpg';
+
+                    // hapus avatar lama kalau ada
+                    if ($user && $user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                        Storage::disk('public')->delete($user->avatar);
+                    }
+
+                    // simpan avatar baru
+                    Storage::disk('public')->put($filename, $avatarContents);
+
+                    $avatarPath = $filename;
+                }
+            } catch (\Exception $e) {
+                $avatarPath = null;
+            }
+
+            // ================= CREATE USER =================
+            if (!$user) {
+                $user = User::create([
+                    'nama' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'email_verified_at' => now(),
+                    'status' => 'aktif',
+                    'google_id' => $googleUser->getId(),
+                    'avatar' => $avatarPath,
+                ]);
+
+                $user->assignRole('user');
+            }
+
+            // ================= UPDATE USER =================
+            else {
+                $updateData = [
+                    'google_id' => $googleUser->getId(),
+                    'email_verified_at' => now(),
+                ];
+
+                if ($avatarPath) {
+                    $updateData['avatar'] = $avatarPath;
                 }
 
-                // simpan avatar baru
-                Storage::disk('public')->put($filename, $avatarContents);
-
-                $avatarPath = $filename;
+                $user->update($updateData);
             }
+
+            // ================= CEK STATUS =================
+            if ($user->status !== 'aktif') {
+                return redirect()->route('login')
+                    ->withErrors(['email' => 'Akun belum aktif.']);
+            }
+
+            // ================= LOGIN =================
+            Auth::login($user);
+
+            return $this->redirectByRole($user);
         } catch (\Exception $e) {
-            $avatarPath = null;
-        }
-
-        // ================= CREATE USER =================
-        if (!$user) {
-            $user = User::create([
-                'nama' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'email_verified_at' => now(),
-                'role' => 'user',
-                'status' => 'aktif',
-                'google_id' => $googleUser->getId(),
-                'avatar' => $avatarPath,
-            ]);
-
-            Role::create([
-                'id_user' => $user->id,
-                'role' => 'user',
-            ]);
-        }
-
-        // ================= UPDATE USER =================
-        else {
-            $updateData = [
-                'google_id' => $googleUser->getId(),
-                'email_verified_at' => now(),
-            ];
-
-            if ($avatarPath) {
-                $updateData['avatar'] = $avatarPath;
-            }
-
-            $user->update($updateData);
-        }
-
-        // ================= CEK STATUS =================
-        if ($user->status !== 'aktif') {
             return redirect()->route('login')
-                ->withErrors(['email' => 'Akun belum aktif.']);
+                ->withErrors(['email' => 'Login Google gagal.']);
         }
-
-        // ================= LOGIN =================
-        Auth::login($user);
-
-        return match ($user->role) {
-            'admin' => redirect()->route('dashboard'),
-            'pengelola' => redirect()->route('pengelola'),
-            'user' => redirect()->route('user'),
-            default => redirect()->route('login')->withErrors(['email' => 'Role tidak valid.']),
-        };
-
-    } catch (\Exception $e) {
-        return redirect()->route('login')
-            ->withErrors(['email' => 'Login Google gagal.']);
     }
-}
 
     // ================= LOGOUT =================
 
