@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Support\Facades\Auth;
-use App\Models\TenantRoleUser;
-use App\Models\Role;
 
 class TenantScope implements Scope
 {
@@ -15,22 +13,15 @@ class TenantScope implements Scope
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (!$user || $user->hasRole('admin')) {
             return;
         }
 
-        $role = Role::where('id_user', $user->id)->first();
-        if (!$role) {
-            return;
+        if ($user->id_tenant) {
+            $builder->where($model->getTable() . '.id_tenant', $user->id_tenant);
+        } else {
+            // user biasa tanpa tenant tidak boleh melihat data apa pun
+            $builder->whereRaw('1 = 0');
         }
-
-        $tenantRoleUser = TenantRoleUser::where('id_role', $role->id)->first();
-        if (!$tenantRoleUser) {
-            return;
-        }
-
-        $tenantId = $tenantRoleUser->id_tenant;
-
-        $builder->where('id_tenant', $tenantId);
     }
 }

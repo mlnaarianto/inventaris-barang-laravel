@@ -14,49 +14,29 @@ trait HasTenant
         static::creating(function ($model) {
             $user = Auth::user();
             if ($user && !$model->id_tenant) {
-                // Ambil tenant dari user, contoh dari relasi role tenant kamu
-                $role = \App\Models\Role::where('id_user', $user->id)->first();
-                if ($role) {
-                    $tenantRoleUser = \App\Models\TenantRoleUser::where('id_role', $role->id)->first();
-                    if ($tenantRoleUser) {
-                        $model->id_tenant = $tenantRoleUser->id_tenant;
-                    }
-                }
+                $model->id_tenant = $user->id_tenant;
             }
         });
 
         static::updating(function ($model) {
-            $user = Auth::user();
-            if ($user) {
-                $tenantId = null;
-                $role = \App\Models\Role::where('id_user', $user->id)->first();
-                if ($role) {
-                    $tenantRoleUser = \App\Models\TenantRoleUser::where('id_role', $role->id)->first();
-                    if ($tenantRoleUser) {
-                        $tenantId = $tenantRoleUser->id_tenant;
-                    }
-                }
-                if ($tenantId !== $model->id_tenant) {
-                    abort(403, 'Akses ditolak (tenant tidak cocok saat update).');
-                }
-            }
+            self::guardTenant($model, 'update');
         });
 
         static::deleting(function ($model) {
-            $user = Auth::user();
-            if ($user) {
-                $tenantId = null;
-                $role = \App\Models\Role::where('id_user', $user->id)->first();
-                if ($role) {
-                    $tenantRoleUser = \App\Models\TenantRoleUser::where('id_role', $role->id)->first();
-                    if ($tenantRoleUser) {
-                        $tenantId = $tenantRoleUser->id_tenant;
-                    }
-                }
-                if ($tenantId !== $model->id_tenant) {
-                    abort(403, 'Akses ditolak (tenant tidak cocok saat delete).');
-                }
-            }
+            self::guardTenant($model, 'delete');
         });
+    }
+
+    protected static function guardTenant($model, string $aksi): void
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->hasRole('admin')) {
+            return;
+        }
+
+        if ($user->id_tenant !== $model->id_tenant) {
+            abort(403, "Akses ditolak (tenant tidak cocok saat $aksi).");
+        }
     }
 }
