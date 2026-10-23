@@ -4,14 +4,11 @@
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <i class="fa-solid fa-file-import"></i> <span>Laporan Barang Masuk</span>
-            
         </h1>
         <hr class="mb-4 border-gray-300">
 
-
-
         {{-- Form Filter Tanggal --}}
-        <form method="GET" action="{{ route('laporanbarangmasuk') }}"
+        <form id="form-filter" method="GET" action="{{ route('laporanbarangmasuk') }}"
             class="grid md:grid-cols-4 sm:grid-cols-2 gap-4 mb-6 items-end">
             <div>
                 <label for="tanggal_awal" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Awal</label>
@@ -22,6 +19,9 @@
                 <label for="tanggal_akhir" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
                 <input type="date" name="tanggal_akhir" id="tanggal_akhir" value="{{ request('tanggal_akhir') }}"
                     class="w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <p id="tanggal-error" class="hidden text-xs text-red-600 mt-1">
+                    Tanggal akhir tidak boleh lebih awal dari tanggal awal.
+                </p>
             </div>
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari Barang</label>
@@ -29,19 +29,21 @@
                     value="{{ request('search') }}"
                     class="w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid @can('laporan.export') grid-cols-2 @else grid-cols-1 @endcan gap-2">
                 <button type="submit"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
                     Tampilkan
                 </button>
-                <a href="{{ route('laporanbarangmasuk.pdf', ['tanggal_awal' => request('tanggal_awal'), 'tanggal_akhir' => request('tanggal_akhir'), 'search' => request('search')]) }}"
-                    target="_blank"
-                    class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 text-center">
-                    Cetak PDF
-                </a>
+
+                @can('laporan.export')
+                    <a href="{{ route('laporanbarangmasuk.pdf', ['tanggal_awal' => request('tanggal_awal'), 'tanggal_akhir' => request('tanggal_akhir'), 'search' => request('search')]) }}"
+                        target="_blank"
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 text-center">
+                        Cetak PDF
+                    </a>
+                @endcan
             </div>
         </form>
-
 
         {{-- Table --}}
         <div class="overflow-x-auto bg-white rounded-xl shadow-md ring-1 ring-gray-200">
@@ -62,8 +64,8 @@
                             <td class="px-6 py-4">{{ $index + 1 }}</td>
                             <td class="px-6 py-4 font-medium text-gray-800">{{ $bm->id_barangmasuk }}</td>
                             <td class="px-6 py-4">{{ $bm->tanggal }}</td>
-                            <td class="px-6 py-4">{{ $bm->dataBarang->nama_barang }}</td>
-                            <td class="px-6 py-4">{{ $bm->dataBarang->satuan->nama }}</td>
+                            <td class="px-6 py-4">{{ $bm->dataBarang->nama_barang ?? '-' }}</td>
+                            <td class="px-6 py-4">{{ $bm->dataBarang->satuan->nama ?? '-' }}</td>
                             <td class="px-6 py-4">{{ $bm->jumlah_masuk }}</td>
                         </tr>
                     @empty
@@ -80,7 +82,7 @@
 
     {{-- Validasi tanggal dengan JavaScript --}}
     <script>
-        document.querySelector('form').addEventListener('submit', function(e) {
+        document.getElementById('form-filter').addEventListener('submit', function(e) {
             const awal = document.getElementById('tanggal_awal').value;
             const akhir = document.getElementById('tanggal_akhir').value;
             const errorEl = document.getElementById('tanggal-error');
