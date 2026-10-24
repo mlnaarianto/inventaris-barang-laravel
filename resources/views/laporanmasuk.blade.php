@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+    @php
+        $tampilTenant = $tenants->count() > 1;
+        $namaTenant = $tenants->keyBy('id');
+        $jumlahKolom = $tampilTenant ? 7 : 6;
+    @endphp
+
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <i class="fa-solid fa-file-import"></i> <span>Laporan Barang Masuk</span>
@@ -51,6 +57,9 @@
                 <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
                     <tr>
                         <th class="px-6 py-4">No</th>
+                        @if ($tampilTenant)
+                            <th class="px-6 py-4">Tenant</th>
+                        @endif
                         <th class="px-6 py-4">No Barang Masuk</th>
                         <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Nama Barang</th>
@@ -62,6 +71,9 @@
                     @forelse ($barangMasuks as $index => $bm)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4">{{ $index + 1 }}</td>
+                            @if ($tampilTenant)
+                                <td class="px-6 py-4">{{ $namaTenant[$bm->id_tenant]->nama_perusahaan ?? '-' }}</td>
+                            @endif
                             <td class="px-6 py-4 font-medium text-gray-800">{{ $bm->id_barangmasuk }}</td>
                             <td class="px-6 py-4">{{ $bm->tanggal }}</td>
                             <td class="px-6 py-4">{{ $bm->dataBarang->nama_barang ?? '-' }}</td>
@@ -70,7 +82,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-6 text-center text-gray-500 italic">
+                            <td colspan="{{ $jumlahKolom }}" class="px-6 py-6 text-center text-gray-500 italic">
                                 Tidak ada data barang masuk.
                             </td>
                         </tr>

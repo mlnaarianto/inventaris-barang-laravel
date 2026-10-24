@@ -14,6 +14,7 @@ class IndexController extends Controller
     public function index()
     {
         $user = Auth::user();
+        
 
         // Tenant yang didaftarkan dengan email user, atau tertaut lewat users.id_tenant
         $tenants = Tenant::where('email', $user->email)

@@ -1,3 +1,8 @@
+@php
+    $tampilTenant = $tenants->count() > 1;
+    $namaTenant = $tenants->keyBy('id');
+    $jumlahKolom = $tampilTenant ? 7 : 6;
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,6 +22,9 @@
         <thead>
             <tr>
                 <th>No</th>
+                @if ($tampilTenant)
+                    <th>Tenant</th>
+                @endif
                 <th>No Barang Masuk</th>
                 <th>Tanggal</th>
                 <th>Nama Barang</th>
@@ -28,19 +36,22 @@
             @forelse($barangMasuks as $index => $barang)
                 <tr>
                     <td>{{ $index + 1 }}</td>
+                    @if ($tampilTenant)
+                        <td>{{ $namaTenant[$barang->id_tenant]->nama_perusahaan ?? '-' }}</td>
+                    @endif
                     <td>{{ $barang->id_barangmasuk }}</td>
                     <td>{{ $barang->tanggal }}</td>
-                    <td>{{ $barang->dataBarang->nama_barang }}</td>
-                    <td>{{ $barang->dataBarang->satuan->nama }}</td>
+                    <td>{{ $barang->dataBarang->nama_barang ?? '-' }}</td>
+                    <td>{{ $barang->dataBarang->satuan->nama ?? '-' }}</td>
                     <td>{{ $barang->jumlah_masuk }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="text-align: center;">Tidak ada data</td>
+                    <td colspan="{{ $jumlahKolom }}" style="text-align: center;">Tidak ada data</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
-<p style="text-align: right;">..............., {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
+    <p style="text-align: right;">..............., {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
 </body>
 </html>

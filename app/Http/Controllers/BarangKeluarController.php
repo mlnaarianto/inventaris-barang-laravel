@@ -9,13 +9,50 @@ use Illuminate\Support\Facades\Auth;
 
 class BarangKeluarController extends Controller
 {
+    /**
+     * Role seperti admin (tenant.bypass) boleh melihat data lintas tenant
+     */
+    private function bisaBypassTenant(): bool
+    {
+        return Auth::user()?->can('tenant.bypass') ?? false;
+    }
+
+    /**
+     * Penjaga untuk operasi tulis: user wajib terhubung ke tenant.
+     * Mengembalikan redirect jika tidak, atau null jika boleh lanjut.
+     */
+    private function tolakJikaTanpaTenant()
+    {
+        if (!Auth::user()?->id_tenant) {
+            return redirect()->route('barangkeluar.index')
+                ->with('crud_error', 'Akun ini tidak terhubung ke tenant, sehingga tidak dapat mengubah data.');
+        }
+
+        return null;
+    }
+
     public function index()
     {
-        $barangkeluars = BarangKeluar::with('dataBarang')->get();
-        $databarangs = DataBarang::all(); // diasumsikan juga pakai tenant filtering
+        $user = Auth::user();
+        $bypass = $this->bisaBypassTenant();
 
-        // Generate ID otomatis untuk no_barangkeluar
-        $newId = $this->generateNoBarangKeluar();
+        if (!$user->id_tenant && !$bypass) {
+            abort(404, 'Tenant tidak ditemukan');
+        }
+
+        $barangKeluarQuery = BarangKeluar::with('dataBarang');
+        $dataBarangQuery = DataBarang::query();
+
+        if (!$bypass) {
+            $barangKeluarQuery->where('id_tenant', $user->id_tenant);
+            $dataBarangQuery->where('id_tenant', $user->id_tenant);
+        }
+
+        $barangkeluars = $barangKeluarQuery->get();
+        $databarangs = $dataBarangQuery->get();
+
+        // ID otomatis hanya untuk user yang punya tenant
+        $newId = $user->id_tenant ? $this->generateNoBarangKeluar() : null;
 
         return view('barangkeluar', compact('barangkeluars', 'databarangs', 'newId'));
     }
@@ -23,11 +60,9 @@ class BarangKeluarController extends Controller
     private function generateNoBarangKeluar()
     {
         $user = Auth::user();
-        if (!$user) return null;
+        if (!$user || !$user->id_tenant) return null;
 
-        // Ambil id_tenant dari relasi user
-        $tenantId = $user->id_tenant;
-        $last = BarangKeluar::where('id_tenant', $tenantId)
+        $last = BarangKeluar::where('id_tenant', $user->id_tenant)
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -41,6 +76,8 @@ class BarangKeluarController extends Controller
 
     public function store(Request $request)
     {
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+
         $request->validate([
             'tanggal' => 'required|date',
             'id_databarang' => 'required|exists:databarangs,id',
@@ -57,7 +94,7 @@ class BarangKeluarController extends Controller
 
         $newId = $this->generateNoBarangKeluar();
 
-        // Pembuatan otomatis akan mengisi id_tenant via HasTenant trait
+        // id_tenant diisi otomatis oleh trait HasTenant
         BarangKeluar::create([
             'no_barangkeluar' => $newId,
             'tanggal' => $request->tanggal,
@@ -73,14 +110,18 @@ class BarangKeluarController extends Controller
 
     public function edit($id)
     {
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+
         $barangkeluar = BarangKeluar::with('dataBarang')->findOrFail($id);
-        $databarangs = DataBarang::all();
+        $databarangs = DataBarang::where('id_tenant', Auth::user()->id_tenant)->get();
 
         return view('barangkeluar.edit', compact('barangkeluar', 'databarangs'));
     }
 
     public function update(Request $request, $id)
     {
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+
         $barangkeluar = BarangKeluar::findOrFail($id);
 
         $request->validate([
@@ -134,6 +175,8 @@ class BarangKeluarController extends Controller
 
     public function destroy($id)
     {
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+
         $barangkeluar = BarangKeluar::findOrFail($id);
 
         $dataBarang = DataBarang::find($barangkeluar->id_databarang);
@@ -145,13 +188,5 @@ class BarangKeluarController extends Controller
         $barangkeluar->delete();
 
         return redirect()->route('barangkeluar.index')->with('crud_success', 'Barang keluar berhasil dihapus');
-    }
-
-    /**
-     * Helper: ambil tenant dari user login
-     */
-    private function getTenantIdFromUser($userId)
-    {
-        return Auth::user()?->id_tenant;
     }
 }

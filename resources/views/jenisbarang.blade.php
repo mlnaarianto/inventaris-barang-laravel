@@ -1,16 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $bisaKelola = \App\Support\TenantContext::current() !== null;
+    $user = auth()->user();
+    $bisaTambah = $bisaKelola && $user->can('jenisbarang.create');
+    $bisaUbah   = $bisaKelola && $user->can('jenisbarang.update');
+    $bisaHapus  = $bisaKelola && $user->can('jenisbarang.delete');
+@endphp
+
 <div class="container mx-auto py-6">
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-3xl font-semibold text-gray-800">Jenis Barang</h1>
 
-        @can('jenisbarang.create')
+        @if ($bisaTambah)
         <button class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition duration-200"
             data-modal-target="modal-tambah">
             Tambah Jenis Barang
         </button>
-        @endcan
+        @endif
     </div>
     <hr class="mb-4 border-gray-300">
 
@@ -27,9 +35,9 @@
                 <tr>
                     <th>No.</th>
                     <th>Jenis Barang</th>
-                    @canany(['jenisbarang.update', 'jenisbarang.delete'])
+                    @if ($bisaUbah || $bisaHapus)
                     <th>Aksi</th>
-                    @endcanany
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -37,24 +45,24 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $jenis->jenis_barang }}</td>
-                    @canany(['jenisbarang.update', 'jenisbarang.delete'])
+                    @if ($bisaUbah || $bisaHapus)
                     <td>
                         <div class="flex space-x-4">
-                            @can('jenisbarang.update')
+                            @if ($bisaUbah)
                             <button type="button" class="text-yellow-500 hover:text-yellow-600"
                                 onclick='openEditModal({{ $jenis->id }}, @json($jenis->jenis_barang))'>Edit</button>
-                            @endcan
+                            @endif
 
-                            @can('jenisbarang.delete')
+                            @if ($bisaHapus)
                             <form action="{{ route('jenisbarangs.destroy', $jenis->id) }}" method="POST"
                                 onsubmit="return confirm('Yakin ingin hapus?')">
                                 @csrf @method('DELETE')
                                 <button class="text-red-500 hover:text-red-600">Hapus</button>
                             </form>
-                            @endcan
+                            @endif
                         </div>
                     </td>
-                    @endcanany
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
@@ -62,7 +70,7 @@
     </div>
 
     {{-- Modal Tambah --}}
-    @can('jenisbarang.create')
+    @if ($bisaTambah)
     <div id="modal-tambah"
         class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-8 rounded-lg w-1/3 max-w-md">
@@ -80,10 +88,10 @@
             </form>
         </div>
     </div>
-    @endcan
+    @endif
 
     {{-- Modal Edit --}}
-    @can('jenisbarang.update')
+    @if ($bisaUbah)
     <div id="modal-edit"
         class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-8 rounded-lg w-1/3 max-w-md">
@@ -101,7 +109,7 @@
             </form>
         </div>
     </div>
-    @endcan
+    @endif
 </div>
 @endsection
 
@@ -129,10 +137,9 @@
             }
         });
 
-        // Modal toggle
-        $('[data-modal-target]').on('click', function() {
-            let modalId = $(this).data('modal-target');
-            $('#' + modalId).toggleClass('hidden');
+        // Modal toggle (delegasi)
+        $(document).on('click', '[data-modal-target]', function() {
+            $('#' + $(this).data('modal-target')).toggleClass('hidden');
         });
     });
 

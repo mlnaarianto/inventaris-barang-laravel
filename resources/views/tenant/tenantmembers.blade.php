@@ -1,26 +1,35 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    // Admin/akun sistem: $tenant null -> tampilan semua tenant, hanya lihat
+    $semuaTenant = $tenant === null;
+@endphp
+
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
+@if (!$semuaTenant)
 @can('member.create')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @endcan
+@endif
 
 <div class="container mx-auto p-6">
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-3xl font-semibold text-gray-800">
-            <span>User Tenant: {{ $tenant->nama }}</span>
+            <span>User Tenant: {{ $semuaTenant ? 'Semua Tenant' : $tenant->nama }}</span>
         </h1>
 
+        @if (!$semuaTenant)
         @can('member.create')
         <button onclick="openModalTambah()" class="mt-4 px-6 py-3 bg-green-500 text-white rounded hover:bg-green-700">
             <i class="fas fa-plus"></i> Tambah User
         </button>
         @endcan
+        @endif
     </div>
     <hr class="mb-4 border-gray-300">
 
@@ -31,9 +40,14 @@
                     <th class="px-4 py-2">No.</th>
                     <th class="px-4 py-2">Nama</th>
                     <th class="px-4 py-2">Email</th>
+                    @if ($semuaTenant)
+                    <th class="px-4 py-2">Tenant</th>
+                    @endif
+                    @if (!$semuaTenant)
                     @can('member.delete')
                     <th class="px-4 py-2">Aksi</th>
                     @endcan
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -42,6 +56,10 @@
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $member->nama }}</td>
                     <td class="px-4 py-2">{{ $member->email }}</td>
+                    @if ($semuaTenant)
+                    <td class="px-4 py-2">{{ $member->tenant->nama ?? '-' }}</td>
+                    @endif
+                    @if (!$semuaTenant)
                     @can('member.delete')
                     <td class="px-4 py-2">
                         <form action="{{ route('tenantmembers.destroy', $member->id) }}" method="POST"
@@ -56,12 +74,14 @@
                         </form>
                     </td>
                     @endcan
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 
+    @if (!$semuaTenant)
     @can('member.create')
     <!-- Modal Tambah -->
     <div id="modal-tambah"
@@ -89,9 +109,11 @@
         </div>
     </div>
     @endcan
+    @endif
 </div>
 
 <script>
+    @if (!$semuaTenant)
     @can('member.create')
 
     function openModalTambah() {
@@ -108,6 +130,7 @@
         document.getElementById('modal-tambah').classList.add('opacity-0', 'pointer-events-none');
     }
     @endcan
+    @endif
 
     $(document).ready(function() {
         $('#tabelUserTenant').DataTable({

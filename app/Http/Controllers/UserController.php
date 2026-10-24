@@ -7,48 +7,16 @@ use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
-    public function changePassword(Request $request)
-    {
-        try {
-            $request->validate([
-                'current_password' => 'required',
-                'new_password' => [
-                    'required',
-                    'string',
-                    'min:8',
-                    'confirmed',
-                    'regex:/^(?=.*[A-Z])(?=.*\d).{8,}$/'
-                ],
-            ], [
-                'new_password.regex' => 'Password baru harus memiliki minimal 8 karakter, mengandung setidaknya satu huruf kapital dan satu angka.',
-                'new_password.confirmed' => 'Konfirmasi password baru tidak cocok.',
-            ]);
-        } catch (ValidationException $e) {
-            $firstError = collect($e->errors())->flatten()->first();
-            return back()->with('crud_error', $firstError)->withInput();
-        }
+    /**
+     * Role yang boleh dipilih saat membuat user dari form.
+     * Admin sengaja tidak dimasukkan.
+     */
+    private const ROLE_FORM = ['pengelola', 'user'];
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-
-        if (!Hash::check($request->current_password, $user->password)) {
-            return back()->with('crud_error', 'Password lama tidak sesuai.')->withInput();
-        }
-
-        if (Hash::check($request->new_password, $user->password)) {
-            return back()->with('crud_error', 'Password baru tidak boleh sama dengan password lama.')->withInput();
-        }
-
-        $user->password = Hash::make($request->new_password);
-        $user->save();
-
-        return back()->with('crud_success', 'Password berhasil diubah.');
-    }
+    // Catatan: changePassword() sudah dipindah ke ProfileController.
 
     /**
      * Display the dashboard with user data.
@@ -64,7 +32,17 @@ class UserController extends Controller
         $tenantAktif = Tenant::where('status', 'aktif')->count();
         $tenantNonaktif = Tenant::where('status', 'nonaktif')->count();
 
-        return view('dashboard', compact('pengelolaCount', 'userCount', 'users', 'tenantAktif', 'tenantNonaktif'));
+        // Opsi role untuk dropdown di modal Tambah User
+        $roleOptions = self::ROLE_FORM;
+
+        return view('dashboard', compact(
+            'pengelolaCount',
+            'userCount',
+            'users',
+            'tenantAktif',
+            'tenantNonaktif',
+            'roleOptions'
+        ));
     }
 
     /**
@@ -76,7 +54,7 @@ class UserController extends Controller
             'nama' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'role' => ['required', Rule::in(['pengelola', 'user'])], // admin tidak boleh dibuat dari form
+            'role' => ['required', Rule::in(self::ROLE_FORM)],
             'status' => ['required', Rule::in(['aktif', 'tidak_aktif', 'pending'])],
         ]);
 

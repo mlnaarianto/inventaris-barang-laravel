@@ -31,14 +31,13 @@
         <form action="{{ route('register') }}" method="POST" class="space-y-4 text-left">
             @csrf
 
-            <!-- Role -->
-            <div>
-                <label for="role" class="block text-sm font-semibold text-gray-700 mb-1">Pilih Role</label>
-                <select id="role" name="role" required
-                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 transition">
-                    <option value="user">User</option>
-                    <option value="pengelola">Pengelola</option>
-                </select>
+            <!-- Info Role -->
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-sm text-indigo-800">
+                <i class="fas fa-circle-info mt-0.5"></i>
+                <p>
+                    Akun yang dibuat lewat halaman ini otomatis berperan sebagai <b>User</b>.
+                    Untuk menjadi <b>Pengelola</b>, hubungi admin setelah Anda berhasil mendaftar.
+                </p>
             </div>
 
             <!-- Nama -->
@@ -48,7 +47,7 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                         <i class="fas fa-user"></i>
                     </span>
-                    <input type="text" id="nama" name="nama" required
+                    <input type="text" id="nama" name="nama" value="{{ old('nama') }}" required
                         class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 transition">
                 </div>
             </div>
@@ -60,7 +59,7 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                         <i class="fas fa-envelope"></i>
                     </span>
-                    <input type="email" id="email" name="email" required
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required
                         class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 transition">
                 </div>
             </div>
@@ -138,25 +137,25 @@
 
     <!-- SweetAlert2 Notifikasi -->
     @if (session('success'))
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Registrasi Berhasil!',
-                text: "{{ session('success') }}",
-                confirmButtonColor: '#5563c1'
-            });
-        </script>
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Registrasi Berhasil!',
+            text: "{{ session('success') }}",
+            confirmButtonColor: '#5563c1'
+        });
+    </script>
     @endif
 
     @if ($errors->any())
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Registrasi Gagal!',
-                html: `{!! implode('<br>', $errors->all()) !!}`,
-                confirmButtonColor: '#e14b56'
-            });
-        </script>
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Registrasi Gagal!',
+            html: `{!! implode('<br>', array_map('e', $errors->all())) !!}`,
+            confirmButtonColor: '#e14b56'
+        });
+    </script>
     @endif
 
 

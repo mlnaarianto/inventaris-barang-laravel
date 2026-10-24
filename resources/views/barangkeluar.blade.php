@@ -1,14 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    // Tombol hanya muncul kalau ada tenant aktif (milik sendiri atau dipilih admin)
+    $bisaKelola = \App\Support\TenantContext::current() !== null;
+    $user = auth()->user();
+    $bisaTambah = $bisaKelola && $user->can('barangkeluar.create');
+    $bisaUbah   = $bisaKelola && $user->can('barangkeluar.update');
+    $bisaHapus  = $bisaKelola && $user->can('barangkeluar.delete');
+@endphp
+
 <div class="container mx-auto py-6">
     <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-semibold text-gray-800">Daftar Barang Masuk</h1>
+        <h1 class="text-3xl font-semibold text-gray-800">Daftar Barang Keluar</h1>
 
-        @can('barangmasuk.create')
+        @if ($bisaTambah)
         <button class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition duration-200"
-            data-modal-target="add-modal">Tambah Barang Masuk</button>
-        @endcan
+            data-modal-target="add-modal">Tambah Barang Keluar</button>
+        @endif
     </div>
     <hr class="mb-4 border-gray-300">
 
@@ -18,85 +27,92 @@
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span class="text-lg font-semibold text-gray-700">Daftar Barang Masuk</span>
+            <span class="text-lg font-semibold text-gray-700">Daftar Barang Keluar</span>
         </div>
-        <table id="tabelBarangMasuk" class="display w-full text-sm text-gray-700">
+        <table id="tabelBarangKeluar" class="display w-full text-sm text-gray-700">
             <thead class="bg-gray-100">
                 <tr>
                     <th class="py-3 px-6 text-left">No.</th>
-                    <th class="py-3 px-6 text-left">ID Barang Masuk</th>
+                    <th class="py-3 px-6 text-left">No Barang Keluar</th>
                     <th class="py-3 px-6 text-left">Tanggal</th>
                     <th class="py-3 px-6 text-left">Nama Barang</th>
                     <th class="py-3 px-6 text-left">Satuan</th>
-                    <th class="py-3 px-6 text-left">Jumlah Masuk</th>
-                    @canany(['barangmasuk.update', 'barangmasuk.delete'])
+                    <th class="py-3 px-6 text-left">Jumlah Keluar</th>
+                    @if ($bisaUbah || $bisaHapus)
                     <th class="py-3 px-6 text-left">Aksi</th>
-                    @endcanany
+                    @endif
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                @foreach ($barangMasuks as $index => $barangMasuk)
+                @foreach ($barangkeluars as $index => $barangkeluar)
                 <tr class="hover:bg-gray-100 transition duration-200">
                     <td class="py-3 px-6">{{ $index + 1 }}</td>
-                    <td class="py-3 px-6">{{ $barangMasuk->id_barangmasuk }}</td>
-                    <td class="py-3 px-6">{{ $barangMasuk->tanggal }}</td>
-                    <td class="py-3 px-6">{{ $barangMasuk->dataBarang->nama_barang ?? '-' }}</td>
-                    <td class="py-3 px-6">{{ $barangMasuk->dataBarang->satuan->nama ?? '-' }}</td>
-                    <td class="py-3 px-6">{{ $barangMasuk->jumlah_masuk }}</td>
-                    @canany(['barangmasuk.update', 'barangmasuk.delete'])
+                    <td class="py-3 px-6">{{ $barangkeluar->no_barangkeluar }}</td>
+                    <td class="py-3 px-6">{{ $barangkeluar->tanggal }}</td>
+                    <td class="py-3 px-6">{{ $barangkeluar->dataBarang->nama_barang ?? '-' }}</td>
+                    <td class="py-3 px-6">{{ $barangkeluar->dataBarang->satuan->nama ?? '-' }}</td>
+                    <td class="py-3 px-6">{{ $barangkeluar->jumlah_keluar }}</td>
+                    @if ($bisaUbah || $bisaHapus)
                     <td class="py-3 px-6">
                         <div class="flex space-x-4">
-                            @can('barangmasuk.update')
+                            @if ($bisaUbah)
                             <button type="button" class="text-yellow-500 hover:text-yellow-600"
-                                data-modal-target="edit-modal-{{ $barangMasuk->id }}">Edit</button>
-                            @endcan
+                                data-modal-target="edit-modal-{{ $barangkeluar->id }}">Edit</button>
+                            @endif
 
-                            @can('barangmasuk.delete')
-                            <form action="{{ route('barangmasuk.destroy', $barangMasuk) }}" method="POST"
+                            @if ($bisaHapus)
+                            <form action="{{ route('barangkeluar.destroy', $barangkeluar->id) }}" method="POST"
                                 class="inline-block" onsubmit="return confirm('Yakin ingin hapus?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-500 hover:text-red-600">Hapus</button>
                             </form>
-                            @endcan
+                            @endif
                         </div>
                     </td>
-                    @endcanany
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 
-    <!-- Modal Edit (di luar tabel, hanya untuk yang boleh update) -->
-    @can('barangmasuk.update')
-    @foreach ($barangMasuks as $barangMasuk)
-    <div id="edit-modal-{{ $barangMasuk->id }}"
-        class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+    <!-- Modal Edit -->
+    @if ($bisaUbah)
+    @foreach ($barangkeluars as $barangkeluar)
+    @php
+        $stokSekarang = $barangkeluar->dataBarang->stok ?? 0;
+        // Stok sebelum transaksi ini = stok sekarang + jumlah keluar lama
+        $stokTersedia = $stokSekarang + $barangkeluar->jumlah_keluar;
+    @endphp
+    <div id="edit-modal-{{ $barangkeluar->id }}"
+        class="modal edit-modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center"
+        data-old-barang="{{ $barangkeluar->id_databarang }}"
+        data-old-jumlah="{{ $barangkeluar->jumlah_keluar }}">
         <div class="bg-white p-4 rounded-lg w-1/3 max-w-md">
-            <form action="{{ route('barangmasuk.update', $barangMasuk) }}" method="POST">
+            <form action="{{ route('barangkeluar.update', $barangkeluar->id) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">ID Barang Masuk</label>
-                    <input type="text" name="id_barangmasuk" class="w-full p-2 border rounded bg-gray-100"
-                        value="{{ $barangMasuk->id_barangmasuk }}" readonly>
+                    <label class="block text-sm font-medium text-gray-700">No Barang Keluar</label>
+                    <input type="text" class="w-full p-2 border rounded bg-gray-100"
+                        value="{{ $barangkeluar->no_barangkeluar }}" readonly>
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Tanggal</label>
                     <input type="date" name="tanggal" class="w-full p-2 border rounded"
-                        value="{{ $barangMasuk->tanggal }}" required>
+                        value="{{ $barangkeluar->tanggal }}" required>
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Nama Barang</label>
-                    <select name="id_databarang" class="w-full p-2 border rounded" required>
-                        @foreach ($dataBarangs as $dataBarang)
-                        <option value="{{ $dataBarang->id }}" data-stok="{{ $dataBarang->stok }}"
-                            data-satuan="{{ $dataBarang->satuan->nama ?? '' }}"
-                            @selected($dataBarang->id == $barangMasuk->id_databarang)>
-                            {{ $dataBarang->nama_barang }}
+                    <select name="id_databarang" class="w-full p-2 border rounded js-barang" required>
+                        @foreach ($databarangs as $databarang)
+                        <option value="{{ $databarang->id }}" data-stok="{{ $databarang->stok }}"
+                            data-satuan="{{ $databarang->satuan->nama ?? '' }}"
+                            @selected($databarang->id == $barangkeluar->id_databarang)>
+                            {{ $databarang->nama_barang }}
                         </option>
                         @endforeach
                     </select>
@@ -104,31 +120,26 @@
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Satuan</label>
-                    <input type="text" id="satuan-edit-{{ $barangMasuk->id }}"
-                        class="w-full p-2 border rounded bg-gray-100"
-                        value="{{ $barangMasuk->dataBarang->satuan->nama ?? '' }}" readonly>
+                    <input type="text" class="w-full p-2 border rounded bg-gray-100 js-satuan"
+                        value="{{ $barangkeluar->dataBarang->satuan->nama ?? '' }}" readonly>
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Stok Tersedia</label>
-                    <input type="number" id="stok-edit-{{ $barangMasuk->id }}"
-                        class="w-full p-2 border rounded bg-gray-100"
-                        value="{{ $barangMasuk->dataBarang->stok ?? 0 }}" readonly>
+                    <input type="number" class="w-full p-2 border rounded bg-gray-100 js-stok"
+                        value="{{ $stokTersedia }}" readonly>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Jumlah Masuk</label>
-                    <input type="number" name="jumlah_masuk" id="jumlah_masuk-edit-{{ $barangMasuk->id }}"
-                        class="w-full p-2 border rounded" value="{{ $barangMasuk->jumlah_masuk }}"
-                        min="1" required>
+                    <label class="block text-sm font-medium text-gray-700">Jumlah Keluar</label>
+                    <input type="number" name="jumlah_keluar" class="w-full p-2 border rounded js-jumlah"
+                        value="{{ $barangkeluar->jumlah_keluar }}" min="1" required>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Total Stok</label>
-                    <input type="number" id="total_stok-edit-{{ $barangMasuk->id }}"
-                        class="w-full p-2 border rounded bg-gray-100"
-                        value="{{ ($barangMasuk->dataBarang->stok ?? 0) + $barangMasuk->jumlah_masuk }}"
-                        readonly>
+                    <label class="block text-sm font-medium text-gray-700">Sisa Stok</label>
+                    <input type="number" class="w-full p-2 border rounded bg-gray-100 js-sisa"
+                        value="{{ $stokSekarang }}" readonly>
                 </div>
 
                 <div class="flex justify-between">
@@ -136,25 +147,25 @@
                         class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">Update</button>
                     <button type="button"
                         class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
-                        data-modal-target="edit-modal-{{ $barangMasuk->id }}">Batal</button>
+                        data-modal-target="edit-modal-{{ $barangkeluar->id }}">Batal</button>
                 </div>
             </form>
         </div>
     </div>
     @endforeach
-    @endcan
+    @endif
 
     <!-- Modal Tambah -->
-    @can('barangmasuk.create')
+    @if ($bisaTambah)
     <div id="add-modal"
         class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-4 rounded-lg w-1/3 max-w-md">
-            <form action="{{ route('barangmasuk.store') }}" method="POST">
+            <form action="{{ route('barangkeluar.store') }}" method="POST">
                 @csrf
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">ID Barang Masuk</label>
-                    <input type="text" name="id_barangmasuk" class="w-full p-2 border rounded bg-gray-100"
+                    <label class="block text-sm font-medium text-gray-700">No Barang Keluar</label>
+                    <input type="text" class="w-full p-2 border rounded bg-gray-100"
                         value="{{ $newId }}" readonly>
                 </div>
 
@@ -167,10 +178,10 @@
                     <label class="block text-sm font-medium text-gray-700">Nama Barang</label>
                     <select name="id_databarang" id="id_databarang" class="w-full p-2 border rounded" required>
                         <option value="">Pilih Barang</option>
-                        @foreach ($dataBarangs as $dataBarang)
-                        <option value="{{ $dataBarang->id }}" data-stok="{{ $dataBarang->stok }}"
-                            data-satuan="{{ $dataBarang->satuan->nama ?? '' }}">
-                            {{ $dataBarang->nama_barang }}
+                        @foreach ($databarangs as $databarang)
+                        <option value="{{ $databarang->id }}" data-stok="{{ $databarang->stok }}"
+                            data-satuan="{{ $databarang->satuan->nama ?? '' }}">
+                            {{ $databarang->nama_barang }}
                         </option>
                         @endforeach
                     </select>
@@ -187,14 +198,14 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Jumlah Masuk</label>
-                    <input type="number" name="jumlah_masuk" id="jumlah_masuk"
+                    <label class="block text-sm font-medium text-gray-700">Jumlah Keluar</label>
+                    <input type="number" name="jumlah_keluar" id="jumlah_keluar"
                         class="w-full p-2 border rounded" min="1" required>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Total Stok</label>
-                    <input type="number" id="total_stok" class="w-full p-2 border rounded bg-gray-100" readonly>
+                    <label class="block text-sm font-medium text-gray-700">Sisa Stok</label>
+                    <input type="number" id="sisa_stok" class="w-full p-2 border rounded bg-gray-100" readonly>
                 </div>
 
                 <div class="flex justify-between">
@@ -206,7 +217,7 @@
             </form>
         </div>
     </div>
-    @endcan
+    @endif
 </div>
 @endsection
 
@@ -218,7 +229,7 @@
 
 <script>
     $(document).ready(function() {
-        $('#tabelBarangMasuk').DataTable({
+        $('#tabelBarangKeluar').DataTable({
             language: {
                 search: "Cari:",
                 lengthMenu: "Tampilkan _MENU_ entri",
@@ -234,51 +245,54 @@
             }
         });
 
-        // Modal toggle
-        $('[data-modal-target]').on('click', function() {
-            let modalId = $(this).data('modal-target');
-            $('#' + modalId).toggleClass('hidden');
+        // Modal toggle (delegasi, supaya tombol di dalam DataTables tetap berfungsi)
+        $(document).on('click', '[data-modal-target]', function() {
+            $('#' + $(this).data('modal-target')).toggleClass('hidden');
         });
 
-        // Tambah Modal (jQuery aman kalau elemennya tidak ada)
+        // ===== Modal Tambah =====
+        function hitungSisaTambah() {
+            const stok = parseInt($('#stok').val()) || 0;
+            const jumlah = parseInt($('#jumlah_keluar').val()) || 0;
+            $('#sisa_stok').val(stok - jumlah);
+        }
+
         $('#id_databarang').on('change', function() {
-            const stok = $('option:selected', this).data('stok');
-            const satuan = $('option:selected', this).data('satuan');
-            $('#stok').val(stok);
-            $('#satuan').val(satuan);
-            updateTotalStok('stok', 'jumlah_masuk', 'total_stok');
+            const opt = $('option:selected', this);
+            $('#stok').val(opt.data('stok'));
+            $('#satuan').val(opt.data('satuan'));
+            hitungSisaTambah();
         });
 
-        $('#jumlah_masuk').on('input', function() {
-            updateTotalStok('stok', 'jumlah_masuk', 'total_stok');
+        $('#jumlah_keluar').on('input', hitungSisaTambah);
+
+        // ===== Modal Edit (satu handler untuk semua modal) =====
+        function hitungEdit(modal) {
+            const stok = parseInt(modal.find('.js-stok').val()) || 0;
+            const jumlah = parseInt(modal.find('.js-jumlah').val()) || 0;
+            modal.find('.js-sisa').val(stok - jumlah);
+        }
+
+        $(document).on('change', '.edit-modal .js-barang', function() {
+            const modal = $(this).closest('.edit-modal');
+            const opt = $('option:selected', this);
+            const oldBarang = String(modal.data('old-barang'));
+            const oldJumlah = parseInt(modal.data('old-jumlah')) || 0;
+
+            // Kalau kembali ke barang yang sama, stok lama dikembalikan dulu
+            let tersedia = parseInt(opt.data('stok')) || 0;
+            if (String(opt.val()) === oldBarang) {
+                tersedia += oldJumlah;
+            }
+
+            modal.find('.js-stok').val(tersedia);
+            modal.find('.js-satuan').val(opt.data('satuan'));
+            hitungEdit(modal);
         });
 
-        // Edit Modal (hanya dirender untuk yang boleh update)
-        @can('barangmasuk.update')
-        @foreach($barangMasuks as $barangMasuk)
-        $('#edit-modal-{{ $barangMasuk->id }} select[name="id_databarang"]').on('change', function() {
-            const stok = $('option:selected', this).data('stok');
-            const satuan = $('option:selected', this).data('satuan');
-            $('#stok-edit-{{ $barangMasuk->id }}').val(stok);
-            $('#satuan-edit-{{ $barangMasuk->id }}').val(satuan);
-            updateTotalStok('stok-edit-{{ $barangMasuk->id }}',
-                'jumlah_masuk-edit-{{ $barangMasuk->id }}',
-                'total_stok-edit-{{ $barangMasuk->id }}');
+        $(document).on('input', '.edit-modal .js-jumlah', function() {
+            hitungEdit($(this).closest('.edit-modal'));
         });
-
-        $('#jumlah_masuk-edit-{{ $barangMasuk->id }}').on('input', function() {
-            updateTotalStok('stok-edit-{{ $barangMasuk->id }}',
-                'jumlah_masuk-edit-{{ $barangMasuk->id }}',
-                'total_stok-edit-{{ $barangMasuk->id }}');
-        });
-        @endforeach
-        @endcan
     });
-
-    function updateTotalStok(stokId, jumlahId, totalId) {
-        const stok = parseInt($('#' + stokId).val()) || 0;
-        const jumlah = parseInt($('#' + jumlahId).val()) || 0;
-        $('#' + totalId).val(stok + jumlah);
-    }
 </script>
 @endpush

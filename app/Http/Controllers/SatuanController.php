@@ -3,43 +3,87 @@
 namespace App\Http\Controllers;
 
 use App\Models\Satuan;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 
 class SatuanController extends Controller
 {
+    /**
+     * Operasi tulis wajib punya tenant aktif (milik sendiri / dipilih admin).
+     */
+    private function tolakJikaTanpaTenant()
+    {
+        if (!TenantContext::current()) {
+            return redirect()->route('satuan.index')->with(
+                'crud_error',
+                TenantContext::bisaBypass()
+                    ? 'Pilih tenant terlebih dahulu di sidebar untuk mengubah data.'
+                    : 'Akun ini tidak terhubung ke tenant, sehingga tidak dapat mengubah data.'
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Query satuan yang dibatasi ke tenant aktif.
+     * (Admin bypass tidak difilter oleh global scope, jadi difilter manual di sini.)
+     */
+    private function queryTenant()
+    {
+        $tenant = TenantContext::current();
+        $query = Satuan::query();
+
+        if ($tenant) {
+            $query->where('id_tenant', $tenant->id);
+        }
+
+        return $query;
+    }
+
     public function index()
     {
-        $satuans = Satuan::all(); // sudah otomatis filter tenant lewat global scope
+        // Admin tanpa tenant terpilih melihat semua tenant
+        $satuans = $this->queryTenant()->get();
+
         return view('satuan', compact('satuans'));
     }
 
     public function store(Request $request)
     {
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+        $tenant = TenantContext::current();
+
         $request->validate([
             'nama' => 'required|string|max:255',
         ]);
 
-        Satuan::create([
-            'nama' => $request->nama,
-            // id_tenant tidak perlu diset manual, akan otomatis oleh HasTenant
-        ]);
+        // id_tenant diisi eksplisit karena admin tidak punya id_tenant sendiri
+        $satuan = new Satuan(['nama' => $request->nama]);
+        $satuan->id_tenant = $tenant->id;
+        $satuan->save();
 
         return redirect()->back()->with('crud_success', 'Data satuan berhasil ditambahkan.');
     }
 
     public function edit($id)
     {
-        $satuan = Satuan::findOrFail($id); // akan otomatis error 404 jika bukan tenant-nya
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+
+        $satuan = $this->queryTenant()->findOrFail($id);
+
         return view('satuan.edit', compact('satuan'));
     }
 
     public function update(Request $request, $id)
     {
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+
         $request->validate([
             'nama' => 'required|string|max:255',
         ]);
 
-        $satuan = Satuan::findOrFail($id); // otomatis filter tenant
+        $satuan = $this->queryTenant()->findOrFail($id);
         $satuan->update([
             'nama' => $request->nama,
         ]);
@@ -49,7 +93,9 @@ class SatuanController extends Controller
 
     public function destroy($id)
     {
-        $satuan = Satuan::findOrFail($id); // sudah filter tenant
+        if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
+
+        $satuan = $this->queryTenant()->findOrFail($id);
 
         if ($satuan->databarangs()->exists()) {
             return redirect()->back()->with('crud_error', 'Tidak dapat menghapus satuan karena digunakan pada data barang.');

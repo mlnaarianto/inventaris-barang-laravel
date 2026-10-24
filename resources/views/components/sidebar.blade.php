@@ -1,8 +1,9 @@
 @php
     $authUser = Auth::user();
+    $bisaBypass = $authUser->can('tenant.bypass');
 
-    // Tenant aktif milik user: didaftarkan dengan email-nya, atau tertaut lewat users.id_tenant.
-    $punyaTenantAktif = \App\Models\Tenant::where('status', 'aktif')
+    // Tenant aktif milik user itu sendiri: didaftarkan dengan email-nya, atau tertaut lewat users.id_tenant.
+    $punyaTenantAktifSendiri = \App\Models\Tenant::where('status', 'aktif')
         ->where(function ($q) use ($authUser) {
             $q->where('email', $authUser->email);
             if ($authUser->id_tenant) {
@@ -11,19 +12,46 @@
         })
         ->exists();
 
-    $punyaTenant = $authUser->id_tenant !== null;
+    // Role dengan permission tenant.bypass (admin) selalu dianggap lolos.
+    $punyaTenantAktif = $bisaBypass || $punyaTenantAktifSendiri;
+    $punyaTenant = $bisaBypass || $authUser->id_tenant !== null;
+
+    // Konteks tenant untuk admin (dipilih lewat dropdown, disimpan di session)
+    $tenantTerpilih = \App\Support\TenantContext::current();
+    $daftarTenant = $bisaBypass
+        ? \App\Models\Tenant::where('status', 'aktif')->orderBy('nama')->get()
+        : collect();
 @endphp
 
 <aside :class="sidebarOpen ? 'w-64' : 'w-0 overflow-hidden'"
     class="bg-purple-700 text-white fixed top-16 left-0 bottom-0 p-4 transition-all duration-300 overflow-y-auto">
 
     <div class="flex items-center space-x-2 mb-6" x-show="sidebarOpen">
-        <img src="{{ asset('images/1.jpg') }}" class="rounded-full w-10 h-10" alt="User">
+        <img src="{{ $authUser->avatar_url ?: asset('images/1.jpg') }}"
+            onerror="this.src='{{ asset('images/1.jpg') }}'"
+            class="rounded-full w-10 h-10 object-cover" alt="User">
         <div>
             <p class="font-bold">{{ $authUser->nama }}</p>
             <p class="text-sm capitalize">{{ $authUser->getRoleNames()->first() }}</p>
         </div>
     </div>
+
+    {{-- ===== Pilih tenant yang dikelola (khusus akun bypass / admin) ===== --}}
+    @if ($bisaBypass)
+        <form action="{{ route('tenant.context') }}" method="POST" class="mb-4" x-show="sidebarOpen">
+            @csrf
+            <label class="text-xs uppercase tracking-wide text-purple-200">Kelola tenant</label>
+            <select name="tenant_id" onchange="this.form.submit()"
+                class="w-full mt-1 p-2 rounded text-gray-800 text-sm">
+                <option value="">Semua tenant (hanya lihat)</option>
+                @foreach ($daftarTenant as $t)
+                    <option value="{{ $t->id }}" @selected($tenantTerpilih && $tenantTerpilih->id == $t->id)>
+                        {{ $t->nama }}
+                    </option>
+                @endforeach
+            </select>
+        </form>
+    @endif
 
     <nav x-show="sidebarOpen">
 
@@ -60,7 +88,7 @@
             </a>
         @endcan
 
-        {{-- ===== Anggota tenant (tenant harus aktif) ===== --}}
+        {{-- ===== Anggota tenant (tenant harus aktif, atau role bypass) ===== --}}
         @if ($punyaTenantAktif)
             @can('member.view')
                 <a href="{{ route('tenantmembers.index') }}"
@@ -70,7 +98,7 @@
             @endcan
         @endif
 
-        {{-- ===== Laporan (tenant harus aktif) ===== --}}
+        {{-- ===== Laporan (tenant harus aktif, atau role bypass) ===== --}}
         @if ($punyaTenantAktif)
             @can('laporan.view')
                 <a href="{{ route('laporanstok') }}"
@@ -88,7 +116,7 @@
             @endcan
         @endif
 
-        {{-- ===== Data barang & transaksi (wajib punya tenant, karena TenantScope) ===== --}}
+        {{-- ===== Data barang & transaksi (wajib punya tenant, kecuali role bypass) ===== --}}
         @if ($punyaTenant)
             @can('databarang.view')
                 <a href="{{ route('namatenant') }}"
@@ -143,5 +171,13 @@
                 </a>
             @endcan
         @endif
+
+        {{-- ===== Akun (semua role yang sudah login) ===== --}}
+        <div class="mt-4 pt-4 border-t border-purple-500">
+            <a href="{{ route('profile.edit') }}"
+                class="p-2 rounded flex items-center space-x-2 {{ request()->routeIs('profile.*') ? 'bg-purple-900' : 'hover:bg-purple-800' }}">
+                <i class="fa-solid fa-user"></i> <span>Profil</span>
+            </a>
+        </div>
     </nav>
 </aside>

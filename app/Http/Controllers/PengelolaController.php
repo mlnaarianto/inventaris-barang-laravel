@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\BarangMasuk;
@@ -16,7 +17,7 @@ use Illuminate\Database\QueryException;
 class PengelolaController extends Controller
 {
     /**
-     * Daftar id tenant milik user login:
+     * Daftar id tenant milik user login (dipakai untuk isolasi kepemilikan):
      * - tenant yang didaftarkan dengan email user (pengelola), dan
      * - tenant yang tertaut lewat users.id_tenant
      */
@@ -31,6 +32,23 @@ class PengelolaController extends Controller
     }
 
     /**
+     * Daftar id tenant untuk LAPORAN dan halaman Nama Tenant (hanya baca):
+     * - admin (tenant.bypass) dengan tenant terpilih: tenant itu saja
+     * - admin tanpa tenant terpilih: semua tenant
+     * - lainnya: tenant milik user
+     */
+    protected function tenantIdsLaporan()
+    {
+        if (TenantContext::bisaBypass()) {
+            $tenant = TenantContext::current();
+
+            return $tenant ? collect([$tenant->id]) : Tenant::pluck('id');
+        }
+
+        return $this->tenantIds();
+    }
+
+    /**
      * Pastikan tenant ini milik user yang login (isolasi antar pengelola).
      */
     protected function pastikanMilik(Tenant $tenant): void
@@ -40,7 +58,7 @@ class PengelolaController extends Controller
 
     public function indexLaporanStok(Request $request)
     {
-        $tenantIds = $this->tenantIds();
+        $tenantIds = $this->tenantIdsLaporan();
 
         // Tenant untuk dropdown filter
         $tenants = Tenant::whereIn('id', $tenantIds)->get();
@@ -73,7 +91,7 @@ class PengelolaController extends Controller
     {
         \Carbon\Carbon::setLocale('id');
 
-        $tenantIds = $this->tenantIds();
+        $tenantIds = $this->tenantIdsLaporan();
 
         if (!$request->filled(['tanggal_awal', 'tanggal_akhir'])) {
             return back()->with('crud_error', 'Harap isi tanggal awal & akhir.');
@@ -107,8 +125,9 @@ class PengelolaController extends Controller
         }
 
         $barangKeluars = $query->get();
+        $tenants = Tenant::whereIn('id', $tenantIds)->get();
 
-        $pdf = Pdf::loadView('laporankeluar_pdf', compact('barangKeluars', 'awal', 'akhir'))
+        $pdf = Pdf::loadView('laporankeluar_pdf', compact('barangKeluars', 'awal', 'akhir', 'tenants'))
             ->setPaper('a4', 'landscape');
 
         return $pdf->download('laporan_barang_keluar.pdf');
@@ -118,7 +137,7 @@ class PengelolaController extends Controller
     {
         \Carbon\Carbon::setLocale('id');
 
-        $tenantIds = $this->tenantIds();
+        $tenantIds = $this->tenantIdsLaporan();
 
         if (!$request->filled('tanggal_awal') || !$request->filled('tanggal_akhir')) {
             return redirect()->back()->with('crud_error', 'Harap isi tanggal awal dan akhir.');
@@ -150,8 +169,10 @@ class PengelolaController extends Controller
         }
 
         $barangMasuks = $query->get();
+        $tenants = Tenant::whereIn('id', $tenantIds)->get();
 
-        $pdf = Pdf::loadView('laporanmasuk_pdf', compact('barangMasuks', 'tanggalAwal', 'tanggalAkhir'))
+
+        $pdf = Pdf::loadView('laporanmasuk_pdf', compact('barangMasuks', 'tanggalAwal', 'tanggalAkhir', 'tenants'))
             ->setPaper('a4', 'landscape');
 
         return $pdf->download('laporan_barang_masuk.pdf');
@@ -159,7 +180,7 @@ class PengelolaController extends Controller
 
     public function indexLaporanBarangMasuk(Request $request)
     {
-        $tenantIds = $this->tenantIds();
+        $tenantIds = $this->tenantIdsLaporan();
 
         /* ---------- 1. Mulai query builder ---------- */
         $query = BarangMasuk::with(['dataBarang', 'dataBarang.satuan'])
@@ -206,7 +227,7 @@ class PengelolaController extends Controller
 
     public function indexLaporanBarangKeluar(Request $request)
     {
-        $tenantIds = $this->tenantIds();
+        $tenantIds = $this->tenantIdsLaporan();
 
         // ─── Mulai Query ─────────────────────────────────────────────────────
         $query = BarangKeluar::with(['dataBarang.satuan'])
@@ -255,7 +276,7 @@ class PengelolaController extends Controller
     // Menampilkan daftar tenant di halaman namatenant
     public function showNamatenant()
     {
-        $tenants = Tenant::whereIn('id', $this->tenantIds())->get();
+        $tenants = Tenant::whereIn('id', $this->tenantIdsLaporan())->get();
 
         return view('namatenant', compact('tenants'));
     }

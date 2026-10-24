@@ -3,26 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\DataBarang;
-use App\Models\Tenant;
 use App\Models\Satuan;
 use App\Models\JenisBarang;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DatabarangController extends Controller
 {
     /**
-     * Helper untuk ambil tenant berdasarkan user login
+     * Tenant yang sedang dikelola:
+     * - user biasa: tenant miliknya
+     * - admin (tenant.bypass): tenant yang dipilih di sidebar, atau null
      */
     protected function getCurrentTenant()
     {
-        return Auth::user()?->tenant;
+        return TenantContext::current();
     }
 
-
     /**
-     * Display a listing of the resource.
+     * Aturan validasi: satuan & jenis barang harus milik tenant yang sama.
      */
+    private function aturanBarang($tenant): array
+    {
+        return [
+            'id_barang' => 'required|string',
+            'nama_barang' => 'required|string',
+            'stok' => 'required|integer',
+            'id_satuan' => ['required', Rule::exists('satuans', 'id')->where('id_tenant', $tenant->id)],
+            'id_jenisbarang' => ['required', Rule::exists('jenisbarangs', 'id')->where('id_tenant', $tenant->id)],
+            'lokasi' => 'required|string|max:255',
+        ];
+    }
+
     public function index()
     {
         if (!Auth::check()) {
@@ -30,37 +44,41 @@ class DatabarangController extends Controller
         }
 
         $tenant = $this->getCurrentTenant();
-        if (!$tenant) {
+
+        if (!$tenant && !TenantContext::bisaBypass()) {
             abort(404, 'Tenant tidak ditemukan untuk user ini.');
         }
 
-        $databarangs = DataBarang::with(['satuan', 'jenisbarang'])
-            ->where('id_tenant', $tenant->id)
-            ->get();
+        $query = DataBarang::with(['satuan', 'jenisbarang']);
 
-        return view('databarang', compact('databarangs'));
+        // Admin tanpa tenant terpilih melihat semua tenant
+        if ($tenant) {
+            $query->where('id_tenant', $tenant->id);
+        }
+
+        $databarangs = $query->get();
+
+        // Dropdown hanya berisi data tenant aktif (kosong kalau admin belum memilih tenant)
+        $daftarSatuan = $tenant ? Satuan::where('id_tenant', $tenant->id)->get() : collect();
+        $daftarJenis = $tenant ? JenisBarang::where('id_tenant', $tenant->id)->get() : collect();
+
+        return view('databarang', compact('databarangs', 'daftarSatuan', 'daftarJenis'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         try {
-            $request->validate([
-                'id_barang' => 'required|string',
-                'nama_barang' => 'required|string',
-                'stok' => 'required|integer',
-                'id_satuan' => 'required|exists:satuans,id',
-                'id_jenisbarang' => 'required|exists:jenisbarangs,id',
-                'lokasi' => 'required|string|max:255', // validasi lokasi
-            ]);
-
-
             $tenant = $this->getCurrentTenant();
             if (!$tenant) {
-                return redirect()->back()->with('crud_error', 'Tenant tidak ditemukan untuk user ini.');
+                return redirect()->back()->with(
+                    'crud_error',
+                    TenantContext::bisaBypass()
+                        ? 'Pilih tenant terlebih dahulu di sidebar.'
+                        : 'Tenant tidak ditemukan untuk user ini.'
+                );
             }
+
+            $request->validate($this->aturanBarang($tenant));
 
             // Cek unik dalam tenant
             $exists = DataBarang::where('id_tenant', $tenant->id)
@@ -80,9 +98,8 @@ class DatabarangController extends Controller
                 'id_satuan' => $request->id_satuan,
                 'id_jenisbarang' => $request->id_jenisbarang,
                 'id_tenant' => $tenant->id,
-                'lokasi' => $request->lokasi, // simpan lokasi
+                'lokasi' => $request->lokasi,
             ]);
-
 
             return redirect()->route('databarangs.index')->with('crud_success', 'Data barang berhasil ditambahkan.');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -92,10 +109,6 @@ class DatabarangController extends Controller
         }
     }
 
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit($id)
     {
         $tenant = $this->getCurrentTenant();
@@ -111,15 +124,12 @@ class DatabarangController extends Controller
             return redirect()->route('databarangs.index')->with('crud_error', 'Data tidak ditemukan.');
         }
 
-        $satuans = Satuan::all();
-        $jenisbarangs = JenisBarang::all();
+        $satuans = Satuan::where('id_tenant', $tenant->id)->get();
+        $jenisbarangs = JenisBarang::where('id_tenant', $tenant->id)->get();
 
         return view('databarangs.edit', compact('databarang', 'satuans', 'jenisbarangs'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
         $tenant = $this->getCurrentTenant();
@@ -132,21 +142,13 @@ class DatabarangController extends Controller
             ->first();
 
         if (!$databarang) {
-            return redirect()->route('databarangs.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant Anda.');
+            return redirect()->route('databarangs.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant ini.');
         }
 
         try {
-            $request->validate([
-                'id_barang' => 'required|string',
-                'nama_barang' => 'required|string',
-                'stok' => 'required|integer',
-                'id_satuan' => 'required|exists:satuans,id',
-                'id_jenisbarang' => 'required|exists:jenisbarangs,id',
-                'lokasi' => 'required|string|max:255',
-            ]);
+            $request->validate($this->aturanBarang($tenant));
 
-
-            // Cek apakah id_barang unik dalam tenant, kecuali untuk record ini sendiri
+            // Unik dalam tenant, kecuali record ini sendiri
             $exists = DataBarang::where('id_tenant', $tenant->id)
                 ->where('id_barang', $request->id_barang)
                 ->where('id', '!=', $databarang->id)
@@ -164,9 +166,8 @@ class DatabarangController extends Controller
                 'stok' => $request->stok,
                 'id_satuan' => $request->id_satuan,
                 'id_jenisbarang' => $request->id_jenisbarang,
-                'lokasi' => $request->lokasi, // update lokasi
+                'lokasi' => $request->lokasi,
             ]);
-
 
             return redirect()->route('databarangs.index')->with('crud_success', 'Data barang berhasil diperbarui.');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -176,10 +177,6 @@ class DatabarangController extends Controller
         }
     }
 
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
         $tenant = $this->getCurrentTenant();
@@ -192,7 +189,7 @@ class DatabarangController extends Controller
             ->first();
 
         if (!$databarang) {
-            return redirect()->route('databarangs.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant Anda.');
+            return redirect()->route('databarangs.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant ini.');
         }
 
         try {

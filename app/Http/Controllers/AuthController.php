@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -80,6 +79,8 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        // Role tidak lagi dipilih dari form. Semua pendaftar mandiri otomatis 'user'.
+        // Role 'pengelola' hanya bisa diberikan oleh admin.
         $data = $request->validate([
             'nama' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -90,7 +91,6 @@ class AuthController extends Controller
                 'regex:/^[A-Z][A-Za-z0-9]{7,}$/',
                 'regex:/[0-9]/',
             ],
-            'role' => ['required', Rule::in(['pengelola', 'user'])],
         ]);
 
         $otp = rand(100000, 999999);
@@ -101,7 +101,7 @@ class AuthController extends Controller
                 'nama' => $data['nama'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
-                'role' => $data['role'],
+                'role' => 'user',
                 'otp' => $otp,
                 'otp_expires_at' => now()->addMinutes(5),
             ]
@@ -203,26 +203,24 @@ class AuthController extends Controller
 
             $avatarPath = null;
 
-            try {
-                $avatarUrl = $googleUser->getAvatar();
+            // Foto Google hanya dipakai kalau user belum punya foto,
+            // supaya foto yang diunggah sendiri di halaman profil tidak tertimpa.
+            if (!$user || !$user->avatar) {
+                try {
+                    $avatarUrl = $googleUser->getAvatar();
 
-                if ($avatarUrl) {
-                    $avatarContents = Http::get($avatarUrl)->body();
+                    if ($avatarUrl) {
+                        $avatarContents = Http::get($avatarUrl)->body();
 
-                    $filename = 'avatars/' . Str::uuid() . '.jpg';
+                        $filename = 'avatars/' . Str::uuid() . '.jpg';
 
-                    // hapus avatar lama kalau ada
-                    if ($user && $user->avatar && Storage::disk('public')->exists($user->avatar)) {
-                        Storage::disk('public')->delete($user->avatar);
+                        Storage::disk('public')->put($filename, $avatarContents);
+
+                        $avatarPath = $filename;
                     }
-
-                    // simpan avatar baru
-                    Storage::disk('public')->put($filename, $avatarContents);
-
-                    $avatarPath = $filename;
+                } catch (\Exception $e) {
+                    $avatarPath = null;
                 }
-            } catch (\Exception $e) {
-                $avatarPath = null;
             }
 
             // ================= CREATE USER =================

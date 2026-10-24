@@ -5,6 +5,7 @@ use App\Http\Controllers\IndexController;
 use App\Http\Controllers\PengelolaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TenantUserController;
 use App\Http\Controllers\TenantMemberController;
 use App\Http\Controllers\SatuanController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\BarangKeluarController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\TenantContextController;
 
 // Route Home
 Route::view('/', 'home')->name('home');
@@ -38,13 +40,22 @@ Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallbac
 // Route Logout & Routes yang memerlukan autentikasi
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::post('/change-password', [UserController::class, 'changePassword'])->name('password.change');
+
+    // ===== Profil (semua role yang sudah login, tanpa middleware permission) =====
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    Route::delete('/profile/avatar', [ProfileController::class, 'destroyAvatar'])->name('profile.avatar.destroy');
+    Route::post('/change-password', [ProfileController::class, 'changePassword'])->name('password.change');
 
     // ===== Administrasi user (admin) =====
     Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard')->middleware('permission:user.view');
     Route::patch('/users/{id}/update-status', [UserController::class, 'updateStatus'])->name('user.updateStatus')->middleware('permission:user.update');
     Route::post('/users', [UserController::class, 'store'])->name('users.store')->middleware('permission:user.create');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:user.delete');
+
+    Route::post('/tenant-context', [TenantContextController::class, 'update'])
+        ->name('tenant.context')->middleware('permission:tenant.bypass');
 
     // ===== Persetujuan tenant (admin) =====
     Route::middleware('permission:tenant.approve')->group(function () {

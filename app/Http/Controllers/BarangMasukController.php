@@ -5,43 +5,56 @@ namespace App\Http\Controllers;
 use App\Models\BarangMasuk;
 use App\Models\DataBarang;
 use App\Models\Tenant;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class BarangMasukController extends Controller
 {
-    /**
-     * Ambil tenant berdasarkan user login
-     */
     protected function getCurrentTenant()
     {
-        return Auth::user()?->tenant;
+        return TenantContext::current();
     }
 
-
-    public function index()
+    /**
+     * Barang harus milik tenant yang sedang aktif.
+     */
+    private function barangMilikTenant(Tenant $tenant, $id): DataBarang
     {
-        $tenant = $this->getCurrentTenant();
-        if (!$tenant) {
-            abort(404, 'Tenant tidak ditemukan');
-        }
+        return DataBarang::where('id_tenant', $tenant->id)->findOrFail($id);
+    }
 
-        $barangMasuks = BarangMasuk::with('dataBarang')
-            ->where('id_tenant', $tenant->id)
-            ->get();
-
-        $dataBarangs = DataBarang::where('id_tenant', $tenant->id)->get();
-
-        // Generate ID otomatis per tenant
+    private function generateId(Tenant $tenant): string
+    {
         $last = BarangMasuk::where('id_tenant', $tenant->id)
             ->orderByDesc('id_barangmasuk')
             ->first();
 
-        $lastNumber = 0;
-        if ($last) {
-            $lastNumber = (int) substr($last->id_barangmasuk, 2);
+        $lastNumber = $last ? (int) substr($last->id_barangmasuk, 2) : 0;
+
+        return 'BM' . str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+    }
+
+    public function index()
+    {
+        $tenant = $this->getCurrentTenant();
+
+        if (!$tenant && !TenantContext::bisaBypass()) {
+            abort(404, 'Tenant tidak ditemukan');
         }
-        $newId = 'BM' . str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+
+        $barangMasukQuery = BarangMasuk::with('dataBarang');
+        $dataBarangQuery = DataBarang::with('satuan');
+
+        // Admin tanpa tenant terpilih melihat semua tenant
+        if ($tenant) {
+            $barangMasukQuery->where('id_tenant', $tenant->id);
+            $dataBarangQuery->where('id_tenant', $tenant->id);
+        }
+
+        $barangMasuks = $barangMasukQuery->get();
+        $dataBarangs = $dataBarangQuery->get();
+
+        $newId = $tenant ? $this->generateId($tenant) : null;
 
         return view('barangmasuk', compact('barangMasuks', 'dataBarangs', 'newId'));
     }
@@ -56,34 +69,30 @@ class BarangMasukController extends Controller
 
         $tenant = $this->getCurrentTenant();
         if (!$tenant) {
-            return redirect()->back()->with('crud_error', 'Tenant tidak ditemukan.');
+            return redirect()->back()->with(
+                'crud_error',
+                TenantContext::bisaBypass()
+                    ? 'Pilih tenant terlebih dahulu di sidebar.'
+                    : 'Tenant tidak ditemukan.'
+            );
         }
 
-        $last = BarangMasuk::where('id_tenant', $tenant->id)
-            ->orderByDesc('id_barangmasuk')
-            ->first();
+        $dataBarang = $this->barangMilikTenant($tenant, $request->id_databarang);
 
-        $lastNumber = 0;
-        if ($last) {
-            $lastNumber = (int) substr($last->id_barangmasuk, 2);
-        }
+        $newId = $this->generateId($tenant);
 
-        $newId = 'BM' . str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-
-        // Tambahan validasi manual (opsional)
         if (BarangMasuk::where('id_tenant', $tenant->id)->where('id_barangmasuk', $newId)->exists()) {
             return back()->with('crud_error', 'ID Barang Masuk sudah digunakan di tenant ini.');
         }
 
-        $barangMasuk = BarangMasuk::create([
+        BarangMasuk::create([
             'id_barangmasuk' => $newId,
             'tanggal' => $request->tanggal,
-            'id_databarang' => $request->id_databarang,
+            'id_databarang' => $dataBarang->id,
             'jumlah_masuk' => $request->jumlah_masuk,
             'id_tenant' => $tenant->id,
         ]);
 
-        $dataBarang = DataBarang::find($request->id_databarang);
         $dataBarang->stok += $request->jumlah_masuk;
         $dataBarang->save();
 
@@ -93,8 +102,8 @@ class BarangMasukController extends Controller
     public function edit(BarangMasuk $barangMasuk)
     {
         $tenant = $this->getCurrentTenant();
-        if (!$tenant || $barangMasuk->id_tenant !== $tenant->id) {
-            return redirect()->route('barangmasuk.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant Anda.');
+        if (!$tenant || (int) $barangMasuk->id_tenant !== (int) $tenant->id) {
+            return redirect()->route('barangmasuk.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant ini.');
         }
 
         $dataBarangs = DataBarang::where('id_tenant', $tenant->id)->get();
@@ -105,8 +114,8 @@ class BarangMasukController extends Controller
     public function update(Request $request, BarangMasuk $barangMasuk)
     {
         $tenant = $this->getCurrentTenant();
-        if (!$tenant || $barangMasuk->id_tenant !== $tenant->id) {
-            return redirect()->route('barangmasuk.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant Anda.');
+        if (!$tenant || (int) $barangMasuk->id_tenant !== (int) $tenant->id) {
+            return redirect()->route('barangmasuk.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant ini.');
         }
 
         $request->validate([
@@ -114,6 +123,9 @@ class BarangMasukController extends Controller
             'id_databarang' => 'required|exists:databarangs,id',
             'jumlah_masuk' => 'required|integer|min:1',
         ]);
+
+        // Barang baru harus milik tenant yang sama
+        $newBarang = $this->barangMilikTenant($tenant, $request->id_databarang);
 
         $oldJumlahMasuk = $barangMasuk->jumlah_masuk;
         $oldIdDataBarang = $barangMasuk->id_databarang;
@@ -126,13 +138,11 @@ class BarangMasukController extends Controller
 
         if ($oldIdDataBarang == $request->id_databarang) {
             $selisih = $request->jumlah_masuk - $oldJumlahMasuk;
-            $dataBarang = DataBarang::find($request->id_databarang);
-            $dataBarang->stok += $selisih;
-            if ($dataBarang->stok < 0) $dataBarang->stok = 0;
-            $dataBarang->save();
+            $newBarang->stok += $selisih;
+            if ($newBarang->stok < 0) $newBarang->stok = 0;
+            $newBarang->save();
         } else {
-            $oldBarang = DataBarang::find($oldIdDataBarang);
-            $newBarang = DataBarang::find($request->id_databarang);
+            $oldBarang = DataBarang::where('id_tenant', $tenant->id)->find($oldIdDataBarang);
 
             if ($oldBarang) {
                 $oldBarang->stok -= $oldJumlahMasuk;
@@ -140,10 +150,8 @@ class BarangMasukController extends Controller
                 $oldBarang->save();
             }
 
-            if ($newBarang) {
-                $newBarang->stok += $request->jumlah_masuk;
-                $newBarang->save();
-            }
+            $newBarang->stok += $request->jumlah_masuk;
+            $newBarang->save();
         }
 
         return redirect()->route('barangmasuk.index')->with('crud_success', 'Barang Masuk berhasil diperbarui dan stok disesuaikan.');
@@ -152,11 +160,11 @@ class BarangMasukController extends Controller
     public function destroy(BarangMasuk $barangMasuk)
     {
         $tenant = $this->getCurrentTenant();
-        if (!$tenant || $barangMasuk->id_tenant !== $tenant->id) {
-            return redirect()->route('barangmasuk.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant Anda.');
+        if (!$tenant || (int) $barangMasuk->id_tenant !== (int) $tenant->id) {
+            return redirect()->route('barangmasuk.index')->with('crud_error', 'Data tidak ditemukan atau bukan milik tenant ini.');
         }
 
-        $dataBarang = DataBarang::find($barangMasuk->id_databarang);
+        $dataBarang = DataBarang::where('id_tenant', $tenant->id)->find($barangMasuk->id_databarang);
         if ($dataBarang) {
             $dataBarang->stok -= $barangMasuk->jumlah_masuk;
             if ($dataBarang->stok < 0) {

@@ -3,27 +3,46 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class TenantMemberController extends Controller
 {
-    private function tenantMilik()
+    private function tenantAktif()
     {
-        $tenant = Auth::user()->tenant;
-        abort_unless($tenant, 403, 'Akun Anda belum memiliki tenant.');
+        $tenant = TenantContext::current();
+
+        abort_unless(
+            $tenant,
+            403,
+            TenantContext::bisaBypass()
+                ? 'Pilih tenant terlebih dahulu di sidebar.'
+                : 'Akun Anda belum memiliki tenant.'
+        );
 
         return $tenant;
     }
 
     public function index()
     {
-        $tenant = $this->tenantMilik();
+        $tenant = TenantContext::current();
 
-        // User yang sudah masuk tenant ini
+        // Admin tanpa tenant terpilih: lihat anggota semua tenant (tanpa aksi tulis)
+        if (!$tenant && TenantContext::bisaBypass()) {
+            $members = User::role('user')
+                ->whereNotNull('id_tenant')
+                ->with('tenant')
+                ->orderBy('nama')
+                ->get();
+            $candidates = collect();
+
+            return view('tenant.tenantmembers', compact('tenant', 'members', 'candidates'));
+        }
+
+        $tenant = $this->tenantAktif();
+
         $members = $tenant->users()->role('user')->orderBy('nama')->get();
 
-        // Kandidat: role user, aktif, dan belum masuk tenant mana pun
         $candidates = User::role('user')
             ->whereNull('id_tenant')
             ->where('status', 'aktif')
@@ -35,13 +54,12 @@ class TenantMemberController extends Controller
 
     public function store(Request $request)
     {
-        $tenant = $this->tenantMilik();
+        $tenant = $this->tenantAktif();
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
         ]);
 
-        // Satu query memaksa semua aturan: role user, aktif, belum punya tenant
         $user = User::role('user')
             ->whereNull('id_tenant')
             ->where('status', 'aktif')
@@ -60,9 +78,8 @@ class TenantMemberController extends Controller
 
     public function destroy(User $user)
     {
-        $tenant = $this->tenantMilik();
+        $tenant = $this->tenantAktif();
 
-        // Isolasi: hanya boleh mengeluarkan user milik tenant sendiri
         abort_unless($user->id_tenant === $tenant->id, 403);
 
         $user->update(['id_tenant' => null]);

@@ -1,14 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $bisaKelola = \App\Support\TenantContext::current() !== null;
+    $user = auth()->user();
+    $bisaTambah = $bisaKelola && $user->can('barangmasuk.create');
+    $bisaUbah   = $bisaKelola && $user->can('barangmasuk.update');
+    $bisaHapus  = $bisaKelola && $user->can('barangmasuk.delete');
+@endphp
+
 <div class="container mx-auto py-6">
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-3xl font-semibold text-gray-800">Daftar Barang Masuk</h1>
 
-        @can('barangmasuk.create')
+        @if ($bisaTambah)
         <button class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition duration-200"
             data-modal-target="add-modal">Tambah Barang Masuk</button>
-        @endcan
+        @endif
     </div>
     <hr class="mb-4 border-gray-300">
 
@@ -29,9 +37,9 @@
                     <th class="py-3 px-6 text-left">Nama Barang</th>
                     <th class="py-3 px-6 text-left">Satuan</th>
                     <th class="py-3 px-6 text-left">Jumlah Masuk</th>
-                    @canany(['barangmasuk.update', 'barangmasuk.delete'])
+                    @if ($bisaUbah || $bisaHapus)
                     <th class="py-3 px-6 text-left">Aksi</th>
-                    @endcanany
+                    @endif
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -43,33 +51,33 @@
                     <td class="py-3 px-6">{{ $barangMasuk->dataBarang->nama_barang ?? '-' }}</td>
                     <td class="py-3 px-6">{{ $barangMasuk->dataBarang->satuan->nama ?? '-' }}</td>
                     <td class="py-3 px-6">{{ $barangMasuk->jumlah_masuk }}</td>
-                    @canany(['barangmasuk.update', 'barangmasuk.delete'])
+                    @if ($bisaUbah || $bisaHapus)
                     <td class="py-3 px-6">
                         <div class="flex space-x-4">
-                            @can('barangmasuk.update')
+                            @if ($bisaUbah)
                             <button type="button" class="text-yellow-500 hover:text-yellow-600"
                                 data-modal-target="edit-modal-{{ $barangMasuk->id }}">Edit</button>
-                            @endcan
+                            @endif
 
-                            @can('barangmasuk.delete')
+                            @if ($bisaHapus)
                             <form action="{{ route('barangmasuk.destroy', $barangMasuk) }}" method="POST"
                                 class="inline-block" onsubmit="return confirm('Yakin ingin hapus?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-500 hover:text-red-600">Hapus</button>
                             </form>
-                            @endcan
+                            @endif
                         </div>
                     </td>
-                    @endcanany
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 
-    <!-- Modal Edit (di luar tabel, hanya untuk yang boleh update) -->
-    @can('barangmasuk.update')
+    <!-- Modal Edit -->
+    @if ($bisaUbah)
     @foreach ($barangMasuks as $barangMasuk)
     <div id="edit-modal-{{ $barangMasuk->id }}"
         class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
@@ -142,10 +150,10 @@
         </div>
     </div>
     @endforeach
-    @endcan
+    @endif
 
     <!-- Modal Tambah -->
-    @can('barangmasuk.create')
+    @if ($bisaTambah)
     <div id="add-modal"
         class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-4 rounded-lg w-1/3 max-w-md">
@@ -206,7 +214,7 @@
             </form>
         </div>
     </div>
-    @endcan
+    @endif
 </div>
 @endsection
 
@@ -234,13 +242,12 @@
             }
         });
 
-        // Modal toggle
-        $('[data-modal-target]').on('click', function() {
-            let modalId = $(this).data('modal-target');
-            $('#' + modalId).toggleClass('hidden');
+        // Modal toggle (delegasi, supaya tombol di dalam DataTables tetap berfungsi)
+        $(document).on('click', '[data-modal-target]', function() {
+            $('#' + $(this).data('modal-target')).toggleClass('hidden');
         });
 
-        // Tambah Modal (jQuery aman kalau elemennya tidak ada)
+        // Modal Tambah (aman kalau elemennya tidak ada)
         $('#id_databarang').on('change', function() {
             const stok = $('option:selected', this).data('stok');
             const satuan = $('option:selected', this).data('satuan');
@@ -253,8 +260,7 @@
             updateTotalStok('stok', 'jumlah_masuk', 'total_stok');
         });
 
-        // Edit Modal (hanya dirender untuk yang boleh update)
-        @can('barangmasuk.update')
+        @if ($bisaUbah)
         @foreach($barangMasuks as $barangMasuk)
         $('#edit-modal-{{ $barangMasuk->id }} select[name="id_databarang"]').on('change', function() {
             const stok = $('option:selected', this).data('stok');
@@ -272,7 +278,7 @@
                 'total_stok-edit-{{ $barangMasuk->id }}');
         });
         @endforeach
-        @endcan
+        @endif
     });
 
     function updateTotalStok(stokId, jumlahId, totalId) {

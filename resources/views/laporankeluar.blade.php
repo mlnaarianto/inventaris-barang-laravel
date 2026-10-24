@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+    @php
+        $tampilTenant = $tenants->count() > 1;
+        $namaTenant = $tenants->keyBy('id');
+        $jumlahKolom = $tampilTenant ? 7 : 6;
+    @endphp
+
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <i class="fa-solid fa-file-export"></i> <span>Laporan Barang Keluar</span>
@@ -63,6 +69,9 @@
                 <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
                     <tr>
                         <th class="px-6 py-4">No</th>
+                        @if ($tampilTenant)
+                            <th class="px-6 py-4">Tenant</th>
+                        @endif
                         <th class="px-6 py-4">No Barang Keluar</th>
                         <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Nama Barang</th>
@@ -74,6 +83,9 @@
                     @forelse ($barangKeluars as $index => $item)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4">{{ $index + 1 }}</td>
+                            @if ($tampilTenant)
+                                <td class="px-6 py-4">{{ $namaTenant[$item->id_tenant]->nama_perusahaan ?? '-' }}</td>
+                            @endif
                             <td class="px-6 py-4 font-medium text-gray-800">{{ $item->no_barangkeluar }}</td>
                             <td class="px-6 py-4">{{ $item->tanggal }}</td>
                             <td class="px-6 py-4">{{ $item->dataBarang->nama_barang ?? '-' }}</td>
@@ -82,7 +94,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-6 text-center text-gray-500 italic">
+                            <td colspan="{{ $jumlahKolom }}" class="px-6 py-6 text-center text-gray-500 italic">
                                 Tidak ada data barang keluar.
                             </td>
                         </tr>

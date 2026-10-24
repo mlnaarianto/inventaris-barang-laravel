@@ -1,21 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
-    @canany(['databarang.create', 'databarang.update'])
-        @php
-            $daftarSatuan = \App\Models\Satuan::all();
-            $daftarJenis = \App\Models\JenisBarang::all();
-        @endphp
-    @endcanany
+    @php
+        $bisaKelola = \App\Support\TenantContext::current() !== null;
+        $user = auth()->user();
+        $bisaTambah = $bisaKelola && $user->can('databarang.create');
+        $bisaUbah   = $bisaKelola && $user->can('databarang.update');
+        $bisaHapus  = $bisaKelola && $user->can('databarang.delete');
+    @endphp
 
     <div class="container mx-auto py-6">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-3xl font-semibold text-gray-800">Data Barang</h1>
 
-            @can('databarang.create')
+            @if ($bisaTambah)
                 <button class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition"
                     data-modal-target="add-modal">Tambah Barang</button>
-            @endcan
+            @endif
         </div>
         <hr class="mb-4 border-gray-300">
 
@@ -37,9 +38,9 @@
                         <th>Satuan</th>
                         <th>Jenis Barang</th>
                         <th>Lokasi</th>
-                        @canany(['databarang.update', 'databarang.delete'])
+                        @if ($bisaUbah || $bisaHapus)
                             <th>Aksi</th>
-                        @endcanany
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -52,32 +53,32 @@
                             <td>{{ $barang->satuan->nama ?? '-' }}</td>
                             <td>{{ $barang->jenisbarang->jenis_barang ?? '-' }}</td>
                             <td>{{ $barang->lokasi }}</td>
-                            @canany(['databarang.update', 'databarang.delete'])
+                            @if ($bisaUbah || $bisaHapus)
                                 <td>
                                     <div class="flex space-x-4">
-                                        @can('databarang.update')
+                                        @if ($bisaUbah)
                                             <button type="button" class="text-yellow-500 hover:text-yellow-600"
                                                 data-modal-target="edit-modal-{{ $barang->id }}">Edit</button>
-                                        @endcan
+                                        @endif
 
-                                        @can('databarang.delete')
+                                        @if ($bisaHapus)
                                             <form action="{{ route('databarangs.destroy', $barang->id) }}" method="POST"
                                                 onsubmit="return confirm('Yakin ingin hapus?')">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="text-red-500 hover:text-red-600">Hapus</button>
                                             </form>
-                                        @endcan
+                                        @endif
                                     </div>
                                 </td>
-                            @endcanany
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
 
-        <!-- Modal Edit (di luar tabel, hanya untuk yang boleh update) -->
-        @can('databarang.update')
+        <!-- Modal Edit -->
+        @if ($bisaUbah)
             @foreach ($databarangs as $barang)
                 <div id="edit-modal-{{ $barang->id }}"
                     class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
@@ -121,10 +122,10 @@
                     </div>
                 </div>
             @endforeach
-        @endcan
+        @endif
 
         <!-- Modal Tambah -->
-        @can('databarang.create')
+        @if ($bisaTambah)
             <div id="add-modal"
                 class="modal hidden fixed inset-0 z-50 bg-gray-600 bg-opacity-50 flex justify-center items-center">
                 <div class="bg-white p-8 rounded-lg w-1/3 max-w-md">
@@ -163,7 +164,7 @@
                     </form>
                 </div>
             </div>
-        @endcan
+        @endif
     </div>
 
     @push('scripts')
@@ -190,10 +191,9 @@
                     }
                 });
 
-                // Modal toggle
-                $('[data-modal-target]').on('click', function() {
-                    let modalId = $(this).data('modal-target');
-                    $('#' + modalId).toggleClass('hidden');
+                // Modal toggle (delegasi, supaya tombol di halaman DataTables lain tetap berfungsi)
+                $(document).on('click', '[data-modal-target]', function() {
+                    $('#' + $(this).data('modal-target')).toggleClass('hidden');
                 });
             });
         </script>
