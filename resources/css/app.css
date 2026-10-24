@@ -1,3 +1,26 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+@import "tailwindcss";
+
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../storage/framework/views/*.php";
+
+/* Mengaktifkan dark mode berbasis class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /* ✅ Ganti Font Utama ke Rajdhani */
+    --font-sans: 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
+    
+    /* ✅ Tambahkan Font Mono Khusus Cyberpunk */
+    --font-mono: 'Share Tech Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    
+    /* Palet warna Cyan (Brand) */
+    --color-brand-50: #ecfeff;
+    --color-brand-100: #cffafe;
+    --color-brand-400: #22d3ee;
+    --color-brand-500: #06b6d4;
+    --color-brand-600: #0891b2;
+    --color-brand-700: #0e7490;
+    --color-brand-900: #164e63;
+    --color-brand-950: #083344;
+}

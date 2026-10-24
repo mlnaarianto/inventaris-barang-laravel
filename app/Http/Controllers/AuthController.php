@@ -64,7 +64,9 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return $this->redirectByRole(Auth::user());
+            // ✅ Tambahan: Flash message login sukses
+            return $this->redirectByRole(Auth::user())
+                ->with('login_success', 'Selamat datang kembali, ' . Auth::user()->nama . '!');
         }
 
         return back()->withErrors(['email' => 'Email atau password salah.']);
@@ -161,7 +163,9 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return $this->redirectByRole($user);
+        // ✅ Tambahan: Flash message register sukses
+        return $this->redirectByRole($user)
+            ->with('login_success', 'Registrasi berhasil! Selamat datang di sistem.');
     }
 
     public function resendOtpSession()
@@ -260,7 +264,9 @@ class AuthController extends Controller
             // ================= LOGIN =================
             Auth::login($user);
 
-            return $this->redirectByRole($user);
+            // ✅ Tambahan: Flash message login google sukses
+            return $this->redirectByRole($user)
+                ->with('login_success', 'Berhasil masuk menggunakan akun Google.');
         } catch (\Exception $e) {
             return redirect()->route('login')
                 ->withErrors(['email' => 'Login Google gagal.']);
@@ -275,6 +281,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        // ✅ Tambahan: Flash message logout sukses
+        return redirect('/login')->with('crud_success', 'Anda telah berhasil keluar dari sistem.');
     }
 }

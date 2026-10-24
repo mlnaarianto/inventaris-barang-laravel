@@ -7,87 +7,120 @@ $bisaAksi = auth()->user()->canany(['tenant.update', 'tenant.delete']);
 $jumlahKolom = $bisaAksi ? 9 : 8;
 @endphp
 
-<div x-data="{ isOpen: false }" class="container mx-auto p-6">
+<div x-data="{ isOpen: false }" class="max-w-7xl mx-auto py-6 space-y-6">
 
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-bold mb-6 flex items-center space-x-2 text-gray-800">
-            <i class="fa-solid fa-building text-purple-600"></i>
-            <span>Pendaftaran Tenant</span>
-        </h1>
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                <span class="p-2 bg-brand-50 dark:bg-brand-500/10 rounded-lg text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-500/20">
+                    <i class="fa-solid fa-building"></i>
+                </span>
+                Pendaftaran Tenant
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Kelola informasi pendaftaran perusahaan (tenant) Anda.</p>
+        </div>
 
         @can('tenant.create')
         @if ($tenants->isEmpty())
-        <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
-            onclick="openModal('addTenantModal')"> <i class="fas fa-plus"></i> Tambah Tenant</button>
+        <button class="inline-flex items-center justify-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-lg shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] hover:bg-brand-500 hover:shadow-[0_6px_20px_rgba(6,182,212,0.23)] transition-all duration-300 font-semibold text-sm"
+            onclick="openModal('addTenantModal')"> 
+            <i class="fas fa-plus"></i> Tambah Tenant
+        </button>
         @endif
         @endcan
     </div>
 
-    <!-- Tabel Tenant -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden mt-6">
+    <!-- Tabel Tenant Card -->
+    <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        
+        <!-- Table Header Info -->
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+            <div class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
+                <i class="fa-solid fa-list-ul"></i>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data Tenant</h2>
+        </div>
+
+        <!-- Table Wrapper -->
         <div class="overflow-x-auto">
-            <table class="w-full min-w-max border-collapse">
-                <thead>
-                    <tr class="bg-purple-700 text-white text-sm uppercase text-center">
-                        <th class="p-4">No</th>
-                        <th class="p-4 text-left">Nama</th>
-                        <th class="p-4 text-left">Perusahaan</th>
-                        <th class="p-4">Kode</th>
-                        <th class="p-4">Email</th>
-                        <th class="p-4">Telepon</th>
-                        <th class="p-4 text-left">Alamat</th>
-                        <th class="p-4">Status</th>
+            <table class="w-full text-sm text-left text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 font-semibold tracking-wider">
+                    <tr>
+                        <th class="py-3 px-5 font-bold w-16 text-center">No</th>
+                        <th class="py-3 px-5 font-bold">Nama (Pengelola)</th>
+                        <th class="py-3 px-5 font-bold">Perusahaan</th>
+                        <th class="py-3 px-5 font-bold text-center">Kode</th>
+                        <th class="py-3 px-5 font-bold">Email</th>
+                        <th class="py-3 px-5 font-bold text-center">Telepon</th>
+                        <th class="py-3 px-5 font-bold">Alamat</th>
+                        <th class="py-3 px-5 font-bold text-center">Status</th>
                         @if ($bisaAksi)
-                        <th class="p-4">Aksi</th>
+                        <th class="py-3 px-5 font-bold text-center w-48">Aksi</th>
                         @endif
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
                     @forelse ($tenants as $index => $tenant)
-                    <tr class="hover:bg-gray-50 text-center">
-                        <td class="p-4 font-semibold">{{ $index + 1 }}</td>
-                        <td class="p-4 text-left whitespace-nowrap">
-                            <i class="fa-solid fa-user text-purple-600 mr-2"></i> {{ $tenant->nama }}
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors align-middle">
+                        <td class="py-3 px-5 text-center">{{ $index + 1 }}</td>
+                        
+                        <td class="py-3 px-5 font-medium text-slate-900 dark:text-white">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-user text-brand-500 text-xs"></i>
+                                {{ $tenant->nama }}
+                            </div>
                         </td>
-                        <td class="p-4 text-left text-purple-600 font-medium">
-                            <i class="fa-solid fa-building text-blue-500 mr-2"></i> {{ $tenant->nama_perusahaan }}
+                        
+                        <td class="py-3 px-5 text-brand-600 dark:text-brand-400 font-medium">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-building text-blue-500 text-xs"></i>
+                                {{ $tenant->nama_perusahaan }}
+                            </div>
                         </td>
-                        <td class="p-4 font-semibold">
-                            <i class="fa-solid fa-key text-gray-600 mr-2"></i> {{ $tenant->kode }}
+                        
+                        <td class="py-3 px-5 text-center">
+                            <span class="inline-block font-mono text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700">
+                                {{ $tenant->kode }}
+                            </span>
                         </td>
-                        <td class="p-4 text-left">
-                            <i class="fa-solid fa-envelope text-blue-600 mr-2"></i> {{ $tenant->email }}
+                        
+                        <td class="py-3 px-5">
+                            {{ $tenant->email }}
                         </td>
-                        <td class="p-4">
-                            <i class="fa-solid fa-phone text-green-600"></i> {{ $tenant->telepon }}
+                        
+                        <td class="py-3 px-5 text-center font-mono">
+                            {{ $tenant->telepon }}
                         </td>
-                        <td class="p-4 text-left">
-                            <i class="fa-solid fa-map-marker-alt text-red-600 mr-2"></i> {{ $tenant->alamat }}
+                        
+                        <td class="py-3 px-5">
+                            {{ $tenant->alamat }}
                         </td>
-                        <td class="p-4">
+                        
+                        <td class="py-3 px-5 text-center">
                             @if ($tenant->status == 'pending')
-                            <span class="px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
-                                <i class="fa-solid fa-clock mr-1"></i> Pending
+                            <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
                             </span>
                             @elseif ($tenant->status == 'aktif')
-                            <span class="px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-                                <i class="fa-solid fa-circle-check mr-1"></i> Aktif
+                            <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
                             </span>
                             @else
-                            <span class="px-3 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
-                                <i class="fa-solid fa-circle-xmark mr-1"></i> Nonaktif
+                            <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Nonaktif
                             </span>
                             @endif
                         </td>
+                        
                         @if ($bisaAksi)
-                        <td class="p-4">
-                            <div class="flex justify-center gap-2">
+                        <td class="py-3 px-5">
+                            <div class="flex items-center justify-center gap-2">
                                 @can('tenant.update')
                                 @if ($tenant->status === 'pending')
                                 <button type="button" onclick="editTenant({{ $tenant->id }})"
-                                    class="px-3 py-1 text-sm font-semibold text-white bg-yellow-500 hover:bg-yellow-600 rounded-md shadow flex items-center space-x-1">
-                                    <i class="fa-solid fa-pen"></i>
-                                    <span>Edit</span>
+                                    class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/30 rounded-md transition-colors">
+                                    <i class="fa-solid fa-pen"></i> Edit
                                 </button>
                                 @endif
                                 @endcan
@@ -98,9 +131,8 @@ $jumlahKolom = $bisaAksi ? 9 : 8;
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
-                                        class="px-3 py-1 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-md shadow flex items-center space-x-1">
-                                        <i class="fa-solid fa-trash"></i>
-                                        <span>Hapus</span>
+                                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30 rounded-md transition-colors">
+                                        <i class="fa-solid fa-trash"></i> Hapus
                                     </button>
                                 </form>
                                 @endcan
@@ -110,8 +142,13 @@ $jumlahKolom = $bisaAksi ? 9 : 8;
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="{{ $jumlahKolom }}" class="p-4 text-center text-gray-500">
-                            <i class="fa-solid fa-folder-open mr-2"></i> Belum ada tenant yang ditambahkan.
+                        <td colspan="{{ $jumlahKolom }}" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-2">
+                                    <i class="fa-solid fa-folder-open text-2xl text-slate-400 dark:text-slate-500"></i>
+                                </div>
+                                <p class="text-sm font-medium">Belum ada tenant yang ditambahkan.</p>
+                            </div>
                         </td>
                     </tr>
                     @endforelse
@@ -121,96 +158,153 @@ $jumlahKolom = $bisaAksi ? 9 : 8;
     </div>
 
     @can('tenant.create')
-    <!-- Modal Tambah Tenant -->
+    <!-- ================= MODAL TAMBAH TENANT ================= -->
     <div id="addTenantModal"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 z-50">
-        <div class="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 class="text-xl font-bold mb-4">Pendaftaran Tenant</h2>
-            <form action="{{ route('pengelola.store') }}" method="POST">
-                @csrf
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Nama</label>
-                    <input type="text" name="nama" class="w-full border rounded p-2 bg-gray-200"
-                        value="{{ auth()->user()->nama }}" readonly required>
+        class="fixed inset-0 z-[100] bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+        
+        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
+            <!-- Aksen atas -->
+            <div class="h-1 w-full bg-gradient-to-r from-transparent via-brand-500 to-transparent"></div>
+
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Pendaftaran Tenant</h2>
+                    <button type="button" onclick="closeModal('addTenantModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
                 </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Nama Perusahaan</label>
-                    <input type="text" name="nama_perusahaan" class="w-full border rounded p-2" required>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Kode</label>
-                    <input type="text" name="kode" class="w-full border rounded p-2" required>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Email</label>
-                    <input type="email" name="email" class="w-full border rounded p-2 bg-gray-200"
-                        value="{{ auth()->user()->email }}" readonly required>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Telepon</label>
-                    <input type="text" name="telepon" class="w-full border rounded p-2">
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Alamat</label>
-                    <textarea name="alamat" class="w-full border rounded p-2"></textarea>
-                </div>
-                <button type="submit"
-                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Simpan</button>
-                <button type="button"
-                    class="ml-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
-                    onclick="closeModal('addTenantModal')">Batal</button>
-            </form>
+
+                <form action="{{ route('pengelola.store') }}" method="POST" class="space-y-4">
+                    @csrf
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Pengelola</label>
+                        <input type="text" name="nama" value="{{ auth()->user()->nama }}" readonly required
+                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Perusahaan</label>
+                        <input type="text" name="nama_perusahaan" required placeholder="PT Maju Jaya"
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Kode Tenant</label>
+                        <input type="text" name="kode" required placeholder="TNT-001"
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
+                        <input type="email" name="email" value="{{ auth()->user()->email }}" readonly required
+                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Telepon</label>
+                        <input type="text" name="telepon" placeholder="08123456789"
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Alamat</label>
+                        <textarea name="alamat" rows="3" placeholder="Alamat lengkap perusahaan..."
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <button type="button" onclick="closeModal('addTenantModal')"
+                            class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-lg shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] transition-all">
+                            Simpan Data
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     @endcan
 
     @can('tenant.update')
-    <!-- Modal Edit Tenant -->
+    <!-- ================= MODAL EDIT TENANT ================= -->
     <div id="editTenantModal"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 z-50">
-        <div class="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 class="text-xl font-bold mb-4">Edit Tenant</h2>
-            <form id="editTenantForm" method="POST">
-                @csrf
-                @method('PUT')
-                <input type="hidden" id="editTenantId" name="id">
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Nama</label>
-                    <input type="text" id="editNama" name="nama"
-                        class="w-full border rounded p-2 bg-gray-200" readonly required>
+        class="fixed inset-0 z-[100] bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+        
+        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
+            <!-- Aksen atas -->
+            <div class="h-1 w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Edit Tenant</h2>
+                    <button type="button" onclick="closeModal('editTenantModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
                 </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Nama Perusahaan</label>
-                    <input type="text" id="editNamaPerusahaan" name="nama_perusahaan"
-                        class="w-full border rounded p-2" required>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Kode</label>
-                    <input type="text" id="editKode" name="kode" class="w-full border rounded p-2" required>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Email</label>
-                    <input type="email" id="editEmail" name="email"
-                        class="w-full border rounded p-2 bg-gray-200" readonly required>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Telepon</label>
-                    <input type="text" id="editTelepon" name="telepon" class="w-full border rounded p-2">
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium">Alamat</label>
-                    <textarea id="editAlamat" name="alamat" class="w-full border rounded p-2"></textarea>
-                </div>
-                <button type="submit"
-                    class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">Update</button>
-                <button type="button"
-                    class="ml-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
-                    onclick="closeModal('editTenantModal')">Batal</button>
-            </form>
+
+                <!-- ID form dan input tetap sama -->
+                <form id="editTenantForm" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" id="editTenantId" name="id">
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Pengelola</label>
+                        <input type="text" id="editNama" name="nama" readonly required
+                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Perusahaan</label>
+                        <input type="text" id="editNamaPerusahaan" name="nama_perusahaan" required
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Kode Tenant</label>
+                        <input type="text" id="editKode" name="kode" required
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
+                        <input type="email" id="editEmail" name="email" readonly required
+                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Telepon</label>
+                        <input type="text" id="editTelepon" name="telepon"
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Alamat</label>
+                        <textarea id="editAlamat" name="alamat" rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <button type="button" onclick="closeModal('editTenantModal')"
+                            class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-400 rounded-lg shadow-[0_4px_14px_0_rgba(245,158,11,0.39)] transition-all">
+                            Update Data
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     @endcan
 
+    <!-- ================= JAVASCRIPT BAWAAN (TETAP UTUH) ================= -->
     <script>
         function openModal(id) {
             const modal = document.getElementById(id);
