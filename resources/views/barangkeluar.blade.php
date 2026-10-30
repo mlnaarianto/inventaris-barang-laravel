@@ -157,7 +157,8 @@
         data-old-barang="{{ $barangkeluar->id_databarang }}"
         data-old-jumlah="{{ $barangkeluar->jumlah_keluar }}">
         
-        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
+        <!-- PERUBAHAN: max-w-md diganti menjadi max-w-2xl -->
+        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative">
             <!-- Aksen atas -->
             <div class="h-1 w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
 
@@ -169,34 +170,36 @@
                     </button>
                 </div>
 
-                <form action="{{ route('barangkeluar.update', $barangkeluar->id) }}" method="POST" class="space-y-4">
+                <form action="{{ route('barangkeluar.update', $barangkeluar->id) }}" method="POST">
                     @csrf
                     @method('PUT')
                     
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">No Barang Keluar</label>
-                        <input type="text" value="{{ $barangkeluar->no_barangkeluar }}" readonly
-                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
-                    </div>
+                    <!-- PERUBAHAN: Menggunakan Grid 2 Kolom -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">No Barang Keluar</label>
+                            <input type="text" value="{{ $barangkeluar->no_barangkeluar }}" readonly
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
-                        <input type="date" name="tanggal" value="{{ $barangkeluar->tanggal }}" required
-                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
-                    </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
+                            <input type="date" name="tanggal" value="{{ $barangkeluar->tanggal }}" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
-                        <select name="id_databarang" class="js-barang w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all" required>
-                            @foreach ($databarangs as $databarang)
-                            <option value="{{ $databarang->id }}" data-stok="{{ $databarang->stok }}" data-satuan="{{ $databarang->satuan->nama ?? '' }}" @selected($databarang->id == $barangkeluar->id_databarang)>
-                                {{ $databarang->nama_barang }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
+                            <select name="id_databarang" class="js-barang w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all" required>
+                                @foreach ($databarangs as $databarang)
+                                <option value="{{ $databarang->id }}" data-stok="{{ $databarang->stok }}" data-satuan="{{ $databarang->satuan->nama ?? '' }}" @selected($databarang->id == $barangkeluar->id_databarang)>
+                                    {{ $databarang->nama_barang }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Satuan</label>
                             <input type="text" class="js-satuan w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm rounded-lg p-2.5 outline-none cursor-not-allowed" value="{{ $barangkeluar->dataBarang->satuan->nama ?? '' }}" readonly>
@@ -205,9 +208,7 @@
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Stok Tersedia</label>
                             <input type="number" class="js-stok w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed" value="{{ $stokTersedia }}" readonly>
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Jumlah Keluar</label>
                             <input type="number" name="jumlah_keluar" class="js-jumlah w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all" value="{{ $barangkeluar->jumlah_keluar }}" min="1" required>
@@ -238,7 +239,8 @@
     <div id="add-modal"
         class="modal hidden fixed inset-0 z-[100] bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex justify-center items-center p-4">
         
-        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
+        <!-- PERUBAHAN: max-w-md diganti menjadi max-w-2xl -->
+        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative">
             <!-- Aksen atas -->
             <div class="h-1 w-full bg-gradient-to-r from-transparent via-brand-500 to-transparent"></div>
 
@@ -250,35 +252,37 @@
                     </button>
                 </div>
 
-                <form action="{{ route('barangkeluar.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('barangkeluar.store') }}" method="POST">
                     @csrf
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">No Barang Keluar</label>
-                        <input type="text" value="{{ $newId }}" readonly
-                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
-                    </div>
+                    <!-- PERUBAHAN: Menggunakan Grid 2 Kolom -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">No Barang Keluar</label>
+                            <input type="text" value="{{ $newId }}" readonly
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
-                        <input type="date" name="tanggal" required
-                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
-                    </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
+                            <input type="date" name="tanggal" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
-                        <select name="id_databarang" id="id_databarang" required
-                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
-                            <option value="">-- Pilih Barang --</option>
-                            @foreach ($databarangs as $databarang)
-                            <option value="{{ $databarang->id }}" data-stok="{{ $databarang->stok }}" data-satuan="{{ $databarang->satuan->nama ?? '' }}">
-                                {{ $databarang->nama_barang }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
+                            <select name="id_databarang" id="id_databarang" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
+                                <option value="">-- Pilih Barang --</option>
+                                @foreach ($databarangs as $databarang)
+                                <option value="{{ $databarang->id }}" data-stok="{{ $databarang->stok }}" data-satuan="{{ $databarang->satuan->nama ?? '' }}">
+                                    {{ $databarang->nama_barang }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Satuan</label>
                             <input type="text" id="satuan" readonly
@@ -289,9 +293,7 @@
                             <input type="number" id="stok" readonly
                                 class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Jumlah Keluar</label>
                             <input type="number" name="jumlah_keluar" id="jumlah_keluar" min="1" required

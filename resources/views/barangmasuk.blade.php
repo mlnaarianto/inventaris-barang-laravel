@@ -148,7 +148,8 @@
     <div id="edit-modal-{{ $barangMasuk->id }}"
         class="modal hidden fixed inset-0 z-[100] bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex justify-center items-center p-4">
         
-        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
+        <!-- PERUBAHAN: max-w-md diganti menjadi max-w-2xl -->
+        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative">
             <!-- Aksen atas -->
             <div class="h-1 w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
 
@@ -160,35 +161,37 @@
                     </button>
                 </div>
 
-                <form action="{{ route('barangmasuk.update', $barangMasuk) }}" method="POST" class="space-y-4">
+                <form action="{{ route('barangmasuk.update', $barangMasuk) }}" method="POST">
                     @csrf
                     @method('PUT')
                     
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">ID Barang Masuk</label>
-                        <input type="text" name="id_barangmasuk" value="{{ $barangMasuk->id_barangmasuk }}" readonly
-                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
-                    </div>
+                    <!-- PERUBAHAN: Menggunakan Grid 2 Kolom -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">ID Barang Masuk</label>
+                            <input type="text" name="id_barangmasuk" value="{{ $barangMasuk->id_barangmasuk }}" readonly
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
-                        <input type="date" name="tanggal" value="{{ $barangMasuk->tanggal }}" required
-                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
-                    </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
+                            <input type="date" name="tanggal" value="{{ $barangMasuk->tanggal }}" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
-                        <select name="id_databarang" required
-                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
-                            @foreach ($dataBarangs as $dataBarang)
-                            <option value="{{ $dataBarang->id }}" data-stok="{{ $dataBarang->stok }}" data-satuan="{{ $dataBarang->satuan->nama ?? '' }}" @selected($dataBarang->id == $barangMasuk->id_databarang)>
-                                {{ $dataBarang->nama_barang }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
+                            <select name="id_databarang" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
+                                @foreach ($dataBarangs as $dataBarang)
+                                <option value="{{ $dataBarang->id }}" data-stok="{{ $dataBarang->stok }}" data-satuan="{{ $dataBarang->satuan->nama ?? '' }}" @selected($dataBarang->id == $barangMasuk->id_databarang)>
+                                    {{ $dataBarang->nama_barang }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Satuan</label>
                             <input type="text" id="satuan-edit-{{ $barangMasuk->id }}" value="{{ $barangMasuk->dataBarang->satuan->nama ?? '' }}" readonly
@@ -199,9 +202,7 @@
                             <input type="number" id="stok-edit-{{ $barangMasuk->id }}" value="{{ $barangMasuk->dataBarang->stok ?? 0 }}" readonly
                                 class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Jumlah Masuk</label>
                             <input type="number" name="jumlah_masuk" id="jumlah_masuk-edit-{{ $barangMasuk->id }}" value="{{ $barangMasuk->jumlah_masuk }}" min="1" required
@@ -234,7 +235,8 @@
     <div id="add-modal"
         class="modal hidden fixed inset-0 z-[100] bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex justify-center items-center p-4">
         
-        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
+        <!-- PERUBAHAN: max-w-md diganti menjadi max-w-2xl -->
+        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative">
             <!-- Aksen atas -->
             <div class="h-1 w-full bg-gradient-to-r from-transparent via-brand-500 to-transparent"></div>
 
@@ -246,35 +248,36 @@
                     </button>
                 </div>
 
-                <form action="{{ route('barangmasuk.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('barangmasuk.store') }}" method="POST">
                     @csrf
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">ID Barang Masuk</label>
-                        <input type="text" name="id_barangmasuk" value="{{ $newId }}" readonly
-                            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
-                    </div>
+                    <!-- PERUBAHAN: Menggunakan Grid 2 Kolom -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">ID Barang Masuk</label>
+                            <input type="text" name="id_barangmasuk" value="{{ $newId }}" readonly
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
-                        <input type="date" name="tanggal" required
-                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
-                    </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
+                            <input type="date" name="tanggal" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all [color-scheme:light] dark:[color-scheme:dark]">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
-                        <select name="id_databarang" id="id_databarang" required
-                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
-                            <option value="">-- Pilih Barang --</option>
-                            @foreach ($dataBarangs as $dataBarang)
-                            <option value="{{ $dataBarang->id }}" data-stok="{{ $dataBarang->stok }}" data-satuan="{{ $dataBarang->satuan->nama ?? '' }}">
-                                {{ $dataBarang->nama_barang }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang</label>
+                            <select name="id_databarang" id="id_databarang" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
+                                <option value="">-- Pilih Barang --</option>
+                                @foreach ($dataBarangs as $dataBarang)
+                                <option value="{{ $dataBarang->id }}" data-stok="{{ $dataBarang->stok }}" data-satuan="{{ $dataBarang->satuan->nama ?? '' }}">
+                                    {{ $dataBarang->nama_barang }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Satuan</label>
                             <input type="text" id="satuan" readonly
@@ -285,9 +288,7 @@
                             <input type="number" id="stok" readonly
                                 class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono text-sm rounded-lg p-2.5 outline-none cursor-not-allowed">
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Jumlah Masuk</label>
                             <input type="number" name="jumlah_masuk" id="jumlah_masuk" min="1" required

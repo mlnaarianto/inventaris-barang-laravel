@@ -7,10 +7,10 @@ use App\Models\Tenant;
 
 class TenantUserController extends Controller
 {
-    // Menampilkan daftar tenant untuk admin
+    // app/Http/Controllers/TenantUserController.php
     public function index()
     {
-        $tenants = Tenant::all();
+        $tenants = Tenant::with('users')->get();   // ← eager load users
         return view('tenant.tenantuser', compact('tenants'));
     }
 
@@ -20,12 +20,10 @@ class TenantUserController extends Controller
         $tenant->update(['status' => 'aktif']); // Sesuaikan dengan enum baru
         return redirect()->route('tenantuser.index')->with('crud_success', 'Tenant berhasil diaktifkan.');
     }
-    
+
     public function reject(Tenant $tenant)
     {
         $tenant->update(['status' => 'nonaktif']); // Sesuaikan dengan enum baru
         return redirect()->route('tenantuser.index')->with('crud_success', 'Tenant berhasil dinonaktifkan.');
     }
-    
 }
-

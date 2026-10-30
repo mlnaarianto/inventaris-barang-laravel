@@ -6,6 +6,7 @@ use App\Models\BarangKeluar;
 use App\Models\DataBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Support\TenantContext; // TAMBAHKAN INI
 
 class BarangKeluarController extends Controller
 {
@@ -19,11 +20,13 @@ class BarangKeluarController extends Controller
 
     /**
      * Penjaga untuk operasi tulis: user wajib terhubung ke tenant.
-     * Mengembalikan redirect jika tidak, atau null jika boleh lanjut.
      */
     private function tolakJikaTanpaTenant()
     {
-        if (!Auth::user()?->id_tenant) {
+        // PERBAIKAN: Cek id_tenant dari user ATAU dari TenantContext (jika admin sedang memilih tenant)
+        $idTenant = TenantContext::current()?->id ?? Auth::user()?->id_tenant;
+
+        if (!$idTenant) {
             return redirect()->route('barangkeluar.index')
                 ->with('crud_error', 'Akun ini tidak terhubung ke tenant, sehingga tidak dapat mengubah data.');
         }
@@ -35,34 +38,41 @@ class BarangKeluarController extends Controller
     {
         $user = Auth::user();
         $bypass = $this->bisaBypassTenant();
+        
+        // PERBAIKAN: Ambil ID tenant aktif (baik dari context admin maupun user biasa)
+        $idTenantAktif = TenantContext::current()?->id ?? $user->id_tenant;
 
-        if (!$user->id_tenant && !$bypass) {
+        if (!$idTenantAktif && !$bypass) {
             abort(404, 'Tenant tidak ditemukan');
         }
 
         $barangKeluarQuery = BarangKeluar::with('dataBarang');
         $dataBarangQuery = DataBarang::query();
 
-        if (!$bypass) {
-            $barangKeluarQuery->where('id_tenant', $user->id_tenant);
-            $dataBarangQuery->where('id_tenant', $user->id_tenant);
+        // PERBAIKAN: Gunakan $idTenantAktif untuk filter
+        if (!$bypass && $idTenantAktif) {
+            $barangKeluarQuery->where('id_tenant', $idTenantAktif);
+            $dataBarangQuery->where('id_tenant', $idTenantAktif);
         }
 
         $barangkeluars = $barangKeluarQuery->get();
         $databarangs = $dataBarangQuery->get();
 
-        // ID otomatis hanya untuk user yang punya tenant
-        $newId = $user->id_tenant ? $this->generateNoBarangKeluar() : null;
+        // PERBAIKAN: Generate ID berdasarkan tenant aktif
+        $newId = $idTenantAktif ? $this->generateNoBarangKeluar($idTenantAktif) : null;
 
         return view('barangkeluar', compact('barangkeluars', 'databarangs', 'newId'));
     }
 
-    private function generateNoBarangKeluar()
+    // PERBAIKAN: Tambahkan parameter $idTenant
+    private function generateNoBarangKeluar($idTenant = null)
     {
-        $user = Auth::user();
-        if (!$user || !$user->id_tenant) return null;
+        // Jika tidak dikirim dari parameter, coba ambil dari context atau user
+        $idTenant = $idTenant ?? TenantContext::current()?->id ?? Auth::user()?->id_tenant;
+        
+        if (!$idTenant) return null;
 
-        $last = BarangKeluar::where('id_tenant', $user->id_tenant)
+        $last = BarangKeluar::where('id_tenant', $idTenant)
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -92,14 +102,16 @@ class BarangKeluarController extends Controller
                 ->withInput();
         }
 
+        // generateNoBarangKeluar() sekarang otomatis mendeteksi tenant aktif
         $newId = $this->generateNoBarangKeluar();
 
-        // id_tenant diisi otomatis oleh trait HasTenant
         BarangKeluar::create([
             'no_barangkeluar' => $newId,
             'tanggal' => $request->tanggal,
             'id_databarang' => $request->id_databarang,
             'jumlah_keluar' => $request->jumlah_keluar,
+            // 'id_tenant' => TenantContext::current()?->id ?? Auth::user()?->id_tenant,
+            // ^ Hapus komentar di atas JIKA trait HasTenant Anda tidak otomatis mengisi id_tenant
         ]);
 
         $dataBarang->stok -= $request->jumlah_keluar;
@@ -113,7 +125,10 @@ class BarangKeluarController extends Controller
         if ($tolak = $this->tolakJikaTanpaTenant()) return $tolak;
 
         $barangkeluar = BarangKeluar::with('dataBarang')->findOrFail($id);
-        $databarangs = DataBarang::where('id_tenant', Auth::user()->id_tenant)->get();
+        
+        // PERBAIKAN: Gunakan tenant aktif
+        $idTenantAktif = TenantContext::current()?->id ?? Auth::user()->id_tenant;
+        $databarangs = DataBarang::where('id_tenant', $idTenantAktif)->get();
 
         return view('barangkeluar.edit', compact('barangkeluar', 'databarangs'));
     }

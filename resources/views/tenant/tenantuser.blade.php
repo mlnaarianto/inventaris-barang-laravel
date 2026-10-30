@@ -20,7 +20,7 @@
 
     <!-- Tenant Table Section -->
     <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden flex flex-col">
-        
+
         <!-- Table Header & Controls -->
         <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex items-center gap-3">
@@ -29,14 +29,14 @@
                 </div>
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white">Data Tenant</h2>
             </div>
-            
+
             <!-- Custom Search & Length Controls -->
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                 <div class="relative w-full sm:w-64 group">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
-                    <input type="text" id="customSearch" 
-                           class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none text-slate-900 dark:text-white transition-all placeholder:text-slate-400" 
-                           placeholder="Cari tenant...">
+                    <input type="text" id="customSearch"
+                        class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none text-slate-900 dark:text-white transition-all placeholder:text-slate-400"
+                        placeholder="Cari tenant...">
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:block">Tampilkan:</span>
@@ -67,66 +67,76 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
                     @foreach ($tenants as $tenant)
-                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors align-middle">
-                            <td class="py-3 px-5 font-medium text-slate-900 dark:text-white">
-                                {{ $tenant->nama }}
-                            </td>
-                            <td class="py-3 px-5">
-                                {{ $tenant->email }}
-                            </td>
-                            <td class="py-3 px-5 text-brand-600 dark:text-brand-400 font-medium">
-                                {{ $tenant->nama_perusahaan }}
-                            </td>
-                            <td class="py-3 px-5 font-semibold">
-                                {{ $tenant->kode }}
-                            </td>
-                            <td class="py-3 px-5">
-                                {{ $tenant->telepon }}
-                            </td>
-                            <td class="py-3 px-5">
-                                {{ $tenant->alamat }}
-                            </td>
-                            <td class="py-3 px-5">
-                                <div class="flex justify-center">
-                                    @if ($tenant->status == 'pending')
-                                        <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
-                                        </span>
-                                    @elseif ($tenant->status == 'aktif')
-                                        <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Nonaktif
-                                        </span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="py-3 px-5">
-                                <div class="flex items-center justify-center gap-2">
-                                    @if ($tenant->status == 'pending' || $tenant->status == 'nonaktif')
-                                        <form action="{{ route('tenantuser.approve', $tenant->id) }}" method="POST">
-                                            @csrf
-                                            <button type="submit" title="Aktifkan Tenant"
-                                                class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 rounded-md transition-colors">
-                                                <i class="fa-solid fa-check"></i> Aktifkan
-                                            </button>
-                                        </form>
-                                    @endif
-                                    
-                                    @if ($tenant->status == 'pending' || $tenant->status == 'aktif')
-                                        <form action="{{ route('tenantuser.reject', $tenant->id) }}" method="POST">
-                                            @csrf
-                                            <button type="submit" title="Nonaktifkan Tenant"
-                                                class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30 rounded-md transition-colors">
-                                                <i class="fa-solid fa-ban"></i> Nonaktifkan
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors align-middle">
+                        <td class="py-3 px-5 font-medium text-slate-900 dark:text-white">
+                            <div class="flex items-center gap-3">
+                                @php
+                                $userTenant = $tenant->users->first(); // user pertama tenant
+                                $avatarTenant = $userTenant?->avatar_url ?: asset('images/1.jpg');
+                                @endphp
+                                <img src="{{ $avatarTenant }}"
+                                    onerror="this.src='{{ asset('images/1.jpg') }}'"
+                                    alt="{{ $tenant->nama }}"
+                                    class="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0">
+                                <span>{{ $tenant->nama }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-5">
+                            {{ $tenant->email }}
+                        </td>
+                        <td class="py-3 px-5 text-brand-600 dark:text-brand-400 font-medium">
+                            {{ $tenant->nama_perusahaan }}
+                        </td>
+                        <td class="py-3 px-5 font-semibold">
+                            {{ $tenant->kode }}
+                        </td>
+                        <td class="py-3 px-5">
+                            {{ $tenant->telepon }}
+                        </td>
+                        <td class="py-3 px-5">
+                            {{ $tenant->alamat }}
+                        </td>
+                        <td class="py-3 px-5">
+                            <div class="flex justify-center">
+                                @if ($tenant->status == 'pending')
+                                <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                </span>
+                                @elseif ($tenant->status == 'aktif')
+                                <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                                </span>
+                                @else
+                                <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Nonaktif
+                                </span>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="py-3 px-5">
+                            <div class="flex items-center justify-center gap-2">
+                                @if ($tenant->status == 'pending' || $tenant->status == 'nonaktif')
+                                <form action="{{ route('tenantuser.approve', $tenant->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" title="Aktifkan Tenant"
+                                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 rounded-md transition-colors">
+                                        <i class="fa-solid fa-check"></i> Aktifkan
+                                    </button>
+                                </form>
+                                @endif
+
+                                @if ($tenant->status == 'pending' || $tenant->status == 'aktif')
+                                <form action="{{ route('tenantuser.reject', $tenant->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" title="Nonaktifkan Tenant"
+                                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30 rounded-md transition-colors">
+                                        <i class="fa-solid fa-ban"></i> Nonaktifkan
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -150,12 +160,13 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
 <style>
     /* Sembunyikan TOTAL semua elemen bawaan DataTables */
-    .dataTables_wrapper .dataTables_length, 
-    .dataTables_wrapper .dataTables_filter, 
-    .dataTables_wrapper .dataTables_info, 
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
     .dataTables_wrapper .dataTables_paginate {
         display: none !important;
     }
+
     /* Hilangkan border bawaan */
     table.dataTable.no-footer {
         border-bottom: none;
@@ -173,10 +184,14 @@
         // 1. Inisialisasi DataTables dengan DOM minimal (hanya tabel)
         let table = $('#tabelTenant').DataTable({
             dom: 't', // Hanya render tabel, tanpa kontrol default
-            order: [[0, 'asc']], // Urutkan berdasarkan Nama (Kolom ke-0) secara default
+            order: [
+                [0, 'asc']
+            ], // Urutkan berdasarkan Nama (Kolom ke-0) secara default
             pageLength: 10,
-            columnDefs: [
-                { orderable: false, targets: [6, 7] } // Matikan sort di kolom Status (6) dan Aksi (7)
+            columnDefs: [{
+                    orderable: false,
+                    targets: [6, 7]
+                } // Matikan sort di kolom Status (6) dan Aksi (7)
             ],
             language: {
                 emptyTable: "Tidak ada data tenant",
@@ -197,7 +212,7 @@
         // 4. Render Custom Info & Pagination setiap kali tabel digambar ulang (draw)
         table.on('draw', function() {
             let info = table.page.info();
-            
+
             // --- A. Render Teks Info ---
             let infoText = '';
             if (info.total === 0) {
@@ -241,7 +256,7 @@
             $('.btn-prev').off('click').on('click', function() {
                 if (!$(this).prop('disabled')) table.page('previous').draw('page');
             });
-            
+
             $('.btn-next').off('click').on('click', function() {
                 if (!$(this).prop('disabled')) table.page('next').draw('page');
             });

@@ -137,7 +137,18 @@ $bisaAksi = auth()->user()->canany(['user.update', 'user.delete']);
                     @foreach ($users as $index => $user)
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors align-middle">
                         <td class="py-3 px-5">{{ $index + 1 }}</td>
-                        <td class="py-3 px-5 font-medium text-slate-900 dark:text-white">{{ $user->nama }}</td>
+                        <td class="py-3 px-5 font-medium text-slate-900 dark:text-white">
+                            <div class="flex items-center gap-3">
+                                @php
+                                    $avatarUser = $user->avatar_url ?: asset('images/1.jpg');
+                                @endphp
+                                <img src="{{ $avatarUser }}"
+                                     onerror="this.src='{{ asset('images/1.jpg') }}'"
+                                     alt="{{ $user->nama }}"
+                                     class="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0">
+                                <span>{{ $user->nama }}</span>
+                            </div>
+                        </td>
                         <td class="py-3 px-5">{{ $user->email }}</td>
                         <td class="py-3 px-5">
                             <span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-xs font-semibold bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400 border border-brand-100 dark:border-brand-500/20">

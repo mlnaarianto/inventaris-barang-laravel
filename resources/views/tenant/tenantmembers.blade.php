@@ -2,8 +2,8 @@
 
 @section('content')
 @php
-    // Admin/akun sistem: $tenant null -> tampilan semua tenant, hanya lihat
-    $semuaTenant = $tenant === null;
+// Admin/akun sistem: $tenant null -> tampilan semua tenant, hanya lihat
+$semuaTenant = $tenant === null;
 @endphp
 
 <div class="max-w-7xl mx-auto py-6 space-y-6">
@@ -23,18 +23,18 @@
         </div>
 
         @if (!$semuaTenant)
-            @can('member.create')
-            <button onclick="openModalTambah()"
-                class="inline-flex items-center justify-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-lg shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] hover:bg-brand-500 hover:shadow-[0_6px_20px_rgba(6,182,212,0.23)] transition-all duration-300 font-semibold text-sm">
-                <i class="fa-solid fa-plus"></i> Tambah User
-            </button>
-            @endcan
+        @can('member.create')
+        <button onclick="openModalTambah()"
+            class="inline-flex items-center justify-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-lg shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] hover:bg-brand-500 hover:shadow-[0_6px_20px_rgba(6,182,212,0.23)] transition-all duration-300 font-semibold text-sm">
+            <i class="fa-solid fa-plus"></i> Tambah User
+        </button>
+        @endcan
         @endif
     </div>
 
     <!-- Table Card -->
     <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden flex flex-col">
-        
+
         <!-- Table Header & Controls -->
         <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex items-center gap-3">
@@ -43,14 +43,14 @@
                 </div>
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data Anggota</h2>
             </div>
-            
+
             <!-- Custom Search & Length Controls -->
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                 <div class="relative w-full sm:w-64 group">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
-                    <input type="text" id="customSearch" 
-                           class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none text-slate-900 dark:text-white transition-all placeholder:text-slate-400" 
-                           placeholder="Cari nama atau email...">
+                    <input type="text" id="customSearch"
+                        class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none text-slate-900 dark:text-white transition-all placeholder:text-slate-400"
+                        placeholder="Cari nama atau email...">
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:block">Tampilkan:</span>
@@ -86,7 +86,18 @@
                     @foreach ($members as $index => $member)
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors align-middle">
                         <td class="py-3 px-5">{{ $index + 1 }}</td>
-                        <td class="py-3 px-5 font-medium text-slate-900 dark:text-white">{{ $member->nama }}</td>
+                        <td class="py-3 px-5 font-medium text-slate-900 dark:text-white">
+                            <div class="flex items-center gap-3">
+                                @php
+                                $avatarMember = $member->avatar_url ?: asset('images/1.jpg');
+                                @endphp
+                                <img src="{{ $avatarMember }}"
+                                    onerror="this.src='{{ asset('images/1.jpg') }}'"
+                                    alt="{{ $member->nama }}"
+                                    class="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0">
+                                <span>{{ $member->nama }}</span>
+                            </div>
+                        </td>
                         <td class="py-3 px-5">{{ $member->email }}</td>
                         @if ($semuaTenant)
                         <td class="py-3 px-5">
@@ -133,12 +144,12 @@
     @can('member.create')
     <!-- Modal Tambah User -->
     <div id="modal-tambah"
-        class="fixed inset-0 z-[100] bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-        
-        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative transform scale-95 transition-transform duration-300" id="modal-content">
-            
+        class="fixed inset-0 z-[100] bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+
+        <div class="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl relative">
+
             <!-- Aksen atas -->
-            <div class="h-1 w-full bg-gradient-to-r from-transparent via-brand-500 to-transparent"></div>
+            <div class="h-1 w-full bg-gradient-to-r from-transparent via-brand-500 to-transparent rounded-t-2xl"></div>
 
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
@@ -150,15 +161,55 @@
 
                 <form method="POST" action="{{ route('tenantmembers.store') }}" class="space-y-4">
                     @csrf
-                    
+
+                    <!-- CUSTOM SEARCHABLE DROPDOWN MENGGUNAKAN ALPINE.JS -->
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Pilih User</label>
-                        <select name="user_id" required class="select-user w-full">
-                            <option value="">Cari dan pilih user...</option>
-                            @foreach ($candidates as $candidate)
-                            <option value="{{ $candidate->id }}">{{ $candidate->nama }} ({{ $candidate->email }})</option>
-                            @endforeach
-                        </select>
+
+                        <!-- PERBAIKAN: @click.away diletakkan di parent div, bukan di tombol -->
+                        <div x-data="userDropdown()" class="relative" @click.away="open = false">
+                            <!-- Input hidden untuk dikirim ke backend -->
+                            <input type="hidden" name="user_id" x-model="selectedId" required>
+
+                            <!-- Tombol Trigger -->
+                            <!-- PERBAIKAN: Menambahkan $nextTick untuk auto-focus ke input search -->
+                            <button type="button"
+                                @click="open = !open; if(open) $nextTick(() => $refs.searchInput.focus())"
+                                class="w-full flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all text-left">
+                                <span x-text="selectedUser ? selectedUser.nama + ' (' + selectedUser.email + ')' : '-- Pilih User --'" :class="!selectedUser ? 'text-slate-400 dark:text-slate-500' : ''"></span>
+                                <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div x-show="open" x-transition.opacity
+                                class="absolute z-50 w-full mt-1 bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+                                style="display: none;">
+
+                                <!-- Input Pencarian -->
+                                <div class="sticky top-0 bg-white dark:bg-[#0b1220] p-2 border-b border-slate-100 dark:border-slate-800 z-10">
+                                    <!-- PERBAIKAN: Menambahkan x-ref="searchInput" -->
+                                    <input type="text" x-model="search" x-ref="searchInput" placeholder="Ketik untuk mencari..."
+                                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-md focus:ring-1 focus:ring-brand-500/50 outline-none p-2 placeholder:text-slate-400">
+                                </div>
+
+                                <!-- List User -->
+                                <ul class="py-1">
+                                    <!-- Template untuk setiap user -->
+                                    <template x-for="user in filteredUsers" :key="user.id">
+                                        <li @click="selectUser(user)"
+                                            class="px-4 py-2 text-sm cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-700 dark:hover:text-brand-400 transition-colors"
+                                            :class="selectedId == user.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 font-medium' : 'text-slate-700 dark:text-slate-300'">
+                                            <span x-text="user.nama"></span> <span class="text-xs text-slate-400" x-text="'(' + user.email + ')'"></span>
+                                        </li>
+                                    </template>
+
+                                    <!-- Jika tidak ada hasil -->
+                                    <li x-show="filteredUsers.length === 0" class="px-4 py-3 text-sm text-center text-slate-500">
+                                        User tidak ditemukan.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -183,83 +234,17 @@
 @push('styles')
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-<!-- Select2 CSS (Hanya dimuat jika diperlukan) -->
-@if (!$semuaTenant)
-@can('member.create')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-@endif
-@endcan
 <style>
     /* Sembunyikan elemen bawaan DataTables */
-    .dataTables_wrapper .dataTables_length, 
-    .dataTables_wrapper .dataTables_filter, 
-    .dataTables_wrapper .dataTables_info, 
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
     .dataTables_wrapper .dataTables_paginate {
         display: none !important;
     }
+
     table.dataTable.no-footer {
         border-bottom: none;
-    }
-
-    /* --- CUSTOM SELECT2 (Cyberpunk Style) --- */
-    .select2-container--default .select2-selection--single {
-        background-color: #f8fafc; /* slate-50 */
-        border: 1px solid #e2e8f0; /* slate-200 */
-        height: 42px;
-        border-radius: 0.5rem;
-        display: flex;
-        align-items: center;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        color: #0f172a;
-        padding-left: 12px;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 40px;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow b {
-        border-color: #64748b transparent transparent transparent;
-    }
-
-    /* Dark Mode Select2 */
-    .dark .select2-container--default .select2-selection--single {
-        background-color: #1e293b; /* slate-800 */
-        border-color: #334155; /* slate-700 */
-    }
-    .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
-        color: #f8fafc;
-    }
-    .dark .select2-container--default .select2-selection--single .select2-selection__arrow b {
-        border-color: #94a3b8 transparent transparent transparent;
-    }
-    
-    /* Select2 Dropdown */
-    .select2-dropdown {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-    .dark .select2-dropdown {
-        background-color: #0b1220;
-        border-color: #1e293b;
-    }
-    .select2-container--default .select2-results__option--selected {
-        background-color: #cffafe;
-        color: #0891b2;
-    }
-    .dark .select2-container--default .select2-results__option--selected {
-        background-color: rgba(6, 182, 212, 0.2);
-        color: #22d3ee;
-    }
-    .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
-        background-color: #06b6d4;
-        color: white;
-    }
-    .dark .select2-search--dropdown .select2-search__field {
-        background-color: #1e293b;
-        border-color: #334155;
-        color: white;
     }
 </style>
 @endpush
@@ -269,56 +254,69 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
-<!-- Select2 JS -->
-@if (!$semuaTenant)
-@can('member.create')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-@endif
-@endcan
-
 <script>
-    // --- Modal Functions ---
-    @if (!$semuaTenant)
+    // --- Modal Functions (Vanilla JS) ---
+    @if(!$semuaTenant)
     @can('member.create')
+
     function openModalTambah() {
         const modal = document.getElementById('modal-tambah');
-        const content = document.getElementById('modal-content');
-        
-        modal.classList.remove('opacity-0', 'pointer-events-none');
-        content.classList.remove('scale-95');
-        content.classList.add('scale-100');
-
-        // Inisialisasi Select2
-        $('#modal-tambah .select-user').select2({
-            dropdownParent: $('#modal-tambah'),
-            width: '100%',
-            placeholder: "Cari dan pilih user...",
-            allowClear: true
-        });
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
 
     function closeModalTambah() {
         const modal = document.getElementById('modal-tambah');
-        const content = document.getElementById('modal-content');
-        
-        modal.classList.add('opacity-0', 'pointer-events-none');
-        content.classList.remove('scale-100');
-        content.classList.add('scale-95');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
     @endcan
     @endif
 
+    // --- Alpine.js Component untuk Searchable Dropdown ---
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('userDropdown', () => ({
+            open: false,
+            search: '',
+            selectedId: '',
+            selectedUser: null,
+            // Ambil data kandidat user dari Laravel
+            users: @json($candidates),
+
+            // Fungsi filter pencarian
+            get filteredUsers() {
+                if (this.search === '') return this.users;
+                return this.users.filter(user =>
+                    user.nama.toLowerCase().includes(this.search.toLowerCase()) ||
+                    user.email.toLowerCase().includes(this.search.toLowerCase())
+                );
+            },
+
+            // Fungsi saat user dipilih
+            selectUser(user) {
+                this.selectedId = user.id;
+                this.selectedUser = user;
+                this.open = false;
+                this.search = ''; // Reset pencarian
+            }
+        }))
+    });
+
     // --- DataTables Custom UI ---
     $(document).ready(function() {
+        // Inisialisasi DataTables
         let table = $('#tabelUserTenant').DataTable({
             dom: 't', // Hanya render tabel
-            order: [[0, 'asc']],
+            order: [
+                [0, 'asc']
+            ],
             pageLength: 10,
             columnDefs: [
-                // Matikan sorting di kolom aksi (jika ada)
-                @if (!$semuaTenant)
-                @can('member.delete')
-                { orderable: false, targets: -1 }
+                @if(!$semuaTenant)
+                @can('member.delete') {
+                    orderable: false,
+                    targets: -1
+                }
                 @endcan
                 @endif
             ],
@@ -328,12 +326,11 @@
             }
         });
 
-        // Bind Custom Search
+        // Bind Custom Search & Length
         $('#customSearch').on('keyup', function() {
             table.search(this.value).draw();
         });
 
-        // Bind Custom Length
         $('#customLength').on('change', function() {
             table.page.len(this.value).draw();
         });
@@ -341,7 +338,7 @@
         // Render Custom Info & Pagination
         table.on('draw', function() {
             let info = table.page.info();
-            
+
             // A. Render Teks Info
             let infoText = '';
             if (info.total === 0) {
@@ -354,7 +351,7 @@
             // B. Render Tombol Pagination
             let paginationHtml = '';
             let prevDisabled = info.page === 0 ? 'disabled' : '';
-            
+
             paginationHtml += `
                 <button type="button" class="btn-prev px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${prevDisabled}">
                     <i class="fa-solid fa-chevron-left text-[10px] mr-1"></i> Kembali
@@ -382,7 +379,7 @@
             $('.btn-prev').off('click').on('click', function() {
                 if (!$(this).prop('disabled')) table.page('previous').draw('page');
             });
-            
+
             $('.btn-next').off('click').on('click', function() {
                 if (!$(this).prop('disabled')) table.page('next').draw('page');
             });
