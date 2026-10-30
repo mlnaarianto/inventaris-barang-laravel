@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Tenant;
+use App\Support\TenantContext; // <-- Tambahkan ini
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -16,21 +17,42 @@ class UserController extends Controller
      */
     private const ROLE_FORM = ['pengelola', 'user'];
 
-    // Catatan: changePassword() sudah dipindah ke ProfileController.
-
     /**
      * Display the dashboard with user data.
      */
     public function index()
     {
-        $pengelolaCount = User::role('pengelola')->count();
-        $userCount = User::role('user')->count();
+        // 1. Ambil tenant yang sedang dipilih di sidebar
+        $tenant = TenantContext::current();
 
-        // Semua user selain admin
-        $users = User::with('roles')->withoutRole('admin')->get();
+        // 2. Base Query untuk User (selalu kecualikan admin)
+        $userQuery = User::withoutRole('admin');
 
-        $tenantAktif = Tenant::where('status', 'aktif')->count();
-        $tenantNonaktif = Tenant::where('status', 'nonaktif')->count();
+        // Jika admin sedang memfilter 1 tenant, tambahkan kondisi where
+        if ($tenant) {
+            $userQuery->where('id_tenant', $tenant->id);
+        }
+
+        // 3. Hitung statistik user berdasarkan filter tenant
+        $pengelolaCount = (clone $userQuery)->role('pengelola')->count();
+        $userCount = (clone $userQuery)->role('user')->count();
+
+        // 4. Ambil data user beserta role-nya
+        $users = (clone $userQuery)->with('roles')->get();
+
+        // 5. Statistik Tenant
+        if ($tenant) {
+            // Jika sedang melihat 1 tenant, statistik menyesuaikan tenant tersebut
+            $tenantAktif = $tenant->status === 'aktif' ? 1 : 0;
+            
+            // Catatan: Di kodingan asli Anda menggunakan 'nonaktif'.
+            // Jika di database Anda 'tidak_aktif', silakan sesuaikan string di bawah.
+            $tenantNonaktif = $tenant->status === 'nonaktif' ? 1 : 0; 
+        } else {
+            // Jika tidak memilih tenant (Mode lihat Semua Tenant)
+            $tenantAktif = Tenant::where('status', 'aktif')->count();
+            $tenantNonaktif = Tenant::where('status', 'nonaktif')->count();
+        }
 
         // Opsi role untuk dropdown di modal Tambah User
         $roleOptions = self::ROLE_FORM;
@@ -58,11 +80,16 @@ class UserController extends Controller
             'status' => ['required', Rule::in(['aktif', 'tidak_aktif', 'pending'])],
         ]);
 
+        // Cek apakah admin sedang memilih tenant tertentu di sidebar
+        $tenantAktif = TenantContext::current();
+
         $user = User::create([
             'nama' => $request->nama,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'status' => $request->status,
+            // Jika admin sedang di konteks tenant tertentu, otomatis daftarkan user ke tenant itu
+            'id_tenant' => $tenantAktif ? $tenantAktif->id : null, 
         ]);
 
         $user->assignRole($request->role);

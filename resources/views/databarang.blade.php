@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Data Barang - Inventaris Barang')
+
 @section('content')
     @php
         $bisaKelola = \App\Support\TenantContext::current() !== null;

@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Barang Keluar - Inventaris Barang')
+
+
 @section('content')
 @php
     // Tombol hanya muncul kalau ada tenant aktif (milik sendiri atau dipilih admin)

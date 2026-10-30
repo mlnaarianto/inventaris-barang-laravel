@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Daftar Tenant - Inventaris Barang')
+
 @section('content')
 <div class="max-w-7xl mx-auto py-6 space-y-6">
 

@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Home | Sistem Inventaris Barang</title>
+
+    <link rel="icon" type="image/png" href="{{ asset('images/13.png') }}">
+
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,20 +33,21 @@
            ========================================= */
         body {
             background-color: #f8fafc;
-            background-image: 
+            background-image:
                 linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
             background-size: 40px 40px;
             background-attachment: fixed;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
-        
+
         /* =========================================
            NEON GRID - DARK MODE (Subtle Cyberpunk)
            ========================================= */
         .dark body {
-            background-color: #020617; /* Slate-950 */
-            background-image: 
+            background-color: #020617;
+            /* Slate-950 */
+            background-image:
                 /* Grid Cyan Tipis */
                 linear-gradient(to right, rgba(6, 182, 212, 0.1) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(6, 182, 212, 0.1) 1px, transparent 1px),
@@ -56,22 +61,50 @@
 
         /* Animasi Pulse untuk visual */
         @keyframes soft-pulse {
-            0%, 100% { transform: scale(1); opacity: 0.6; }
-            50%      { transform: scale(1.05); opacity: 0.2; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.2;
+            }
         }
-        .soft-pulse { animation: soft-pulse 6s ease-in-out infinite; }
-        
+
+        .soft-pulse {
+            animation: soft-pulse 6s ease-in-out infinite;
+        }
+
         /* Animasi Rotasi Radar */
         @keyframes spin-slow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .spin-slow { animation: spin-slow 15s linear infinite; }
+            from {
+                transform: rotate(0deg);
+            }
 
-        ::selection { background: #cffafe; color: #164e63; }
-        .dark ::selection { background: #0891b2; color: #ffffff; }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin-slow {
+            animation: spin-slow 15s linear infinite;
+        }
+
+        ::selection {
+            background: #cffafe;
+            color: #164e63;
+        }
+
+        .dark ::selection {
+            background: #0891b2;
+            color: #ffffff;
+        }
     </style>
 </head>
+
 <body class="font-sans antialiased text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
 
     {{-- ================= NAVBAR ================= --}}
@@ -109,15 +142,15 @@
 
                     {{-- Tombol Auth --}}
                     @if (Route::has('login'))
-                        @auth
-                            <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 bg-slate-900 dark:bg-brand-600 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-slate-800 dark:hover:bg-brand-500 transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                                Dashboard <i class="fas fa-arrow-right text-[10px]"></i>
-                            </a>
-                        @else
-                            <a href="{{ route('login') }}" class="inline-flex items-center gap-2 bg-slate-900 dark:bg-brand-600 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-slate-800 dark:hover:bg-brand-500 transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                                Masuk <i class="fas fa-sign-in-alt text-[10px]"></i>
-                            </a>
-                        @endauth
+                    @auth
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 bg-slate-900 dark:bg-brand-600 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-slate-800 dark:hover:bg-brand-500 transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                        Dashboard <i class="fas fa-arrow-right text-[10px]"></i>
+                    </a>
+                    @else
+                    <a href="{{ route('login') }}" class="inline-flex items-center gap-2 bg-slate-900 dark:bg-brand-600 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-slate-800 dark:hover:bg-brand-500 transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                        Masuk <i class="fas fa-sign-in-alt text-[10px]"></i>
+                    </a>
+                    @endauth
                     @endif
                 </div>
 
@@ -149,13 +182,13 @@
 
                     <div class="flex flex-col sm:flex-row gap-3 pt-2">
                         @auth
-                            <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-brand-500 transition-all duration-300 text-sm shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] hover:shadow-[0_6px_20px_rgba(6,182,212,0.23)]">
-                                <i class="fas fa-cubes"></i> Buka Gudang
-                            </a>
+                        <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-brand-500 transition-all duration-300 text-sm shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] hover:shadow-[0_6px_20px_rgba(6,182,212,0.23)]">
+                            <i class="fas fa-cubes"></i> Buka Gudang
+                        </a>
                         @else
-                            <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-brand-500 transition-all duration-300 text-sm shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] hover:shadow-[0_6px_20px_rgba(6,182,212,0.23)]">
-                                <i class="fas fa-sign-in-alt"></i> Masuk ke Sistem
-                            </a>
+                        <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-brand-500 transition-all duration-300 text-sm shadow-[0_4px_14px_0_rgba(6,182,212,0.39)] hover:shadow-[0_6px_20px_rgba(6,182,212,0.23)]">
+                            <i class="fas fa-sign-in-alt"></i> Masuk ke Sistem
+                        </a>
                         @endauth
 
                         <a href="#fitur" class="inline-flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold px-6 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-brand-400 dark:hover:border-brand-500 transition-colors text-sm">
@@ -183,7 +216,7 @@
                 {{-- KANAN (Visual Cyberpunk) --}}
                 <div class="lg:col-span-5 flex justify-center relative">
                     <div class="relative w-full max-w-md aspect-square">
-                        
+
                         {{-- Efek Grid & Radar --}}
                         <div class="absolute inset-0 rounded-full border border-slate-200 dark:border-brand-900/30 transition-colors duration-300"></div>
                         <div class="absolute inset-8 rounded-full border border-slate-200 dark:border-brand-900/40 transition-colors duration-300"></div>
@@ -323,7 +356,7 @@
         // Event listener tombol
         themeToggleBtn.addEventListener('click', function() {
             html.classList.toggle('dark');
-            
+
             if (html.classList.contains('dark')) {
                 localStorage.setItem('theme', 'dark');
             } else {
@@ -334,4 +367,5 @@
     </script>
 
 </body>
+
 </html>

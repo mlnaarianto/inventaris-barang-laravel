@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Dashboard User - Inventaris Barang')
+
 @section('content')
 <div x-data="{ isOpen: false }" class="max-w-7xl mx-auto py-6 space-y-6">
 

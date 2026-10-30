@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Profil Saya - Inventaris Barang')
+
+
 @section('content')
 <div class="max-w-3xl mx-auto py-6 space-y-6">
 
@@ -14,11 +17,6 @@
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Kelola informasi akun, foto profil, dan keamanan Anda.</p>
         </div>
-        
-        <a href="{{ $backUrl }}"
-            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-semibold text-sm border border-slate-200 dark:border-slate-700">
-            <i class="fa-solid fa-arrow-left"></i> Kembali
-        </a>
     </div>
 
     <!-- ================= FOTO PROFIL ================= -->
@@ -136,13 +134,13 @@
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Password Saat Ini</label>
                     <input :type="show ? 'text' : 'password'" name="current_password" required
-                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
+                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all" placeholder="Masukkan password saat ini">
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Password Baru</label>
                     <input :type="show ? 'text' : 'password'" name="new_password" x-model="password" required
-                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
+                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all" placeholder="Masukkan password baru">
 
                     <!-- Strength bar -->
                     <div class="w-full h-1.5 mt-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
@@ -181,7 +179,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Konfirmasi Password Baru</label>
                     <input :type="show ? 'text' : 'password'" name="new_password_confirmation" required
-                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all">
+                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all" placeholder="Konfirmasi password baru">
                 </div>
 
                 <label class="flex items-center gap-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer w-max">

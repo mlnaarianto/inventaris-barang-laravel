@@ -7,6 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard - Inventaris Barang')</title>
 
+    <link rel="icon" type="image/png" href="{{ asset('images/13.png') }}">
+
     <!-- Vite (Tailwind CSS) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -69,15 +71,20 @@
         <!-- Sidebar -->
         @include('components.partials.sidebar')
 
-        <!-- Main Content Area -->
+                <!-- Main Content Area -->
         <main id="content-area" 
-              class="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 transition-all duration-300"
+              class="relative z-10 flex-1 flex flex-col overflow-hidden transition-all duration-300"
               :class="sidebarOpen ? 'md:ml-64' : 'md:ml-0'">
             
-            @yield('content')
+            <!-- Area Konten yang bisa di-scroll -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+                @yield('content')
+            </div>
             
-            <!-- Footer -->
-            @include('components.partials.footer')
+            <!-- Footer (Menempel di bawah, tidak ikut scroll) -->
+            <div class="shrink-0 w-full">
+                @include('components.partials.footer')
+            </div>
 
         </main>
 

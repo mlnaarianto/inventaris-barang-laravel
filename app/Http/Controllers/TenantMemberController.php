@@ -47,7 +47,13 @@ class TenantMemberController extends Controller
             ->whereNull('id_tenant')
             ->where('status', 'aktif')
             ->orderBy('nama')
-            ->get();
+            ->get()
+            ->map(fn($u) => [
+                'id'         => $u->id,
+                'nama'       => $u->nama,
+                'email'      => $u->email,
+                'avatar_url' => $u->avatar_url,   // ← accessor dipanggil manual
+            ]);
 
         return view('tenant.tenantmembers', compact('tenant', 'members', 'candidates'));
     }

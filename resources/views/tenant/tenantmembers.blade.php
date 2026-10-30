@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Anggota Tenant - Inventaris Barang')
+
 @section('content')
 @php
 // Admin/akun sistem: $tenant null -> tampilan semua tenant, hanya lihat
@@ -94,7 +96,8 @@ $semuaTenant = $tenant === null;
                                 <img src="{{ $avatarMember }}"
                                     onerror="this.src='{{ asset('images/1.jpg') }}'"
                                     alt="{{ $member->nama }}"
-                                    class="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0">
+                                    style="width: 32px; height: 32px; min-width: 32px; object-fit: cover;"
+                                    class="rounded-full border border-slate-200 dark:border-slate-700 shrink-0">
                                 <span>{{ $member->nama }}</span>
                             </div>
                         </td>
@@ -176,7 +179,18 @@ $semuaTenant = $tenant === null;
                             <button type="button"
                                 @click="open = !open; if(open) $nextTick(() => $refs.searchInput.focus())"
                                 class="w-full flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 p-2.5 outline-none transition-all text-left">
-                                <span x-text="selectedUser ? selectedUser.nama + ' (' + selectedUser.email + ')' : '-- Pilih User --'" :class="!selectedUser ? 'text-slate-400 dark:text-slate-500' : ''"></span>
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <template x-if="selectedUser">
+                                        <img :src="selectedUser.avatar_url || '{{ asset('images/1.jpg') }}'"
+                                            onerror="this.src='{{ asset('images/1.jpg') }}'"
+                                            :alt="selectedUser.nama"
+                                            style="width: 24px; height: 24px; min-width: 24px; object-fit: cover;"
+                                            class="rounded-full border border-slate-200 dark:border-slate-700 shrink-0">
+                                    </template>
+                                    <span x-text="selectedUser ? selectedUser.nama + ' (' + selectedUser.email + ')' : '-- Pilih User --'"
+                                        :class="!selectedUser ? 'text-slate-400 dark:text-slate-500' : ''"
+                                        class="truncate"></span>
+                                </div>
                                 <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
                             </button>
 
@@ -197,9 +211,17 @@ $semuaTenant = $tenant === null;
                                     <!-- Template untuk setiap user -->
                                     <template x-for="user in filteredUsers" :key="user.id">
                                         <li @click="selectUser(user)"
-                                            class="px-4 py-2 text-sm cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-700 dark:hover:text-brand-400 transition-colors"
+                                            class="px-4 py-2 text-sm cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-700 dark:hover:text-brand-400 transition-colors flex items-center gap-2.5"
                                             :class="selectedId == user.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 font-medium' : 'text-slate-700 dark:text-slate-300'">
-                                            <span x-text="user.nama"></span> <span class="text-xs text-slate-400" x-text="'(' + user.email + ')'"></span>
+                                            <img :src="user.avatar_url || '{{ asset('images/1.jpg') }}'"
+                                                onerror="this.src='{{ asset('images/1.jpg') }}'"
+                                                :alt="user.nama"
+                                                style="width: 28px; height: 28px; min-width: 28px; object-fit: cover;"
+                                                class="rounded-full border border-slate-200 dark:border-slate-700 shrink-0">
+                                            <div class="min-w-0 flex-1">
+                                                <div class="truncate" x-text="user.nama"></div>
+                                                <div class="text-xs text-slate-400 truncate" x-text="user.email"></div>
+                                            </div>
                                         </li>
                                     </template>
 

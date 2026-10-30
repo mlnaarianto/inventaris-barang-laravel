@@ -284,7 +284,9 @@ class PengelolaController extends Controller
     // Menampilkan daftar tenant
     public function index()
     {
-        $tenants = Tenant::where('email', Auth::user()->email)->get();
+        $tenants = Tenant::where('email', Auth::user()->email)
+            ->with('users')      // ← eager load biar tidak N+1
+            ->get();
         return view('pengelola', compact('tenants'));
     }
 

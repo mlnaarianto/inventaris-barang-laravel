@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Laporan Stok Barang - Inventaris Barang')
+
 @section('content')
 @php
     $tampilTenant = $tenants->count() > 1;
