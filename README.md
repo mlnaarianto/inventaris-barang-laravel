@@ -117,7 +117,7 @@ Buka browser dan kunjungi 👉 **http://localhost:8000**
 
 ## 📄 Lisensi
 
-Proyek ini bersifat open-source dan dilisensikan di bawah [MIT License](LICENSE).
+Proyek ini dilisensikan di bawah [MIT License](LICENSE). Info lebih lanjut tentang lisensi ini: [opensource.org/license/MIT](https://opensource.org/license/MIT).
 
 Anda bebas menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini, baik untuk keperluan pribadi maupun komersial, dengan tetap menyertakan atribusi hak cipta asli.
 
