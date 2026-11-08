@@ -71,13 +71,23 @@
         <!-- Sidebar -->
         @include('components.partials.sidebar')
 
-                <!-- Main Content Area -->
+        <!-- Main Content Area -->
         <main id="content-area" 
               class="relative z-10 flex-1 flex flex-col overflow-hidden transition-all duration-300"
               :class="sidebarOpen ? 'md:ml-64' : 'md:ml-0'">
             
             <!-- Area Konten yang bisa di-scroll -->
             <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+                
+                {{-- =========================================
+                     RENDER BREADCRUMB DIGLACTIC
+                     ========================================= --}}
+                @if (Breadcrumbs::exists())
+                    <div class="mb-4">
+                        {{ Breadcrumbs::render() }}
+                    </div>
+                @endif
+
                 @yield('content')
             </div>
             

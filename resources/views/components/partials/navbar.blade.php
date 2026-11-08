@@ -10,7 +10,7 @@
         </button>
 
         {{-- Brand --}}
-        <a href="{{ route('dashboard') }}" class="ml-1 flex items-center gap-2.5">
+        <a href="#" class="ml-1 flex items-center gap-2.5">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 dark:bg-brand-600 text-white font-bold text-xs shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                 INV
             </span>
